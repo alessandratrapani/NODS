@@ -140,10 +140,10 @@ for conn_model in connection_models:
         }
         ids_GrC_pre = connectivity[conn_model]["id_pre"]
         ids_PC_post = connectivity[conn_model]["id_post"]
-        for vt_num, pc_id in enumerate(np.unique(ids_PC_post)):
-            syn_param["vt_num"] = float(vt_num)
+        for n, id_PC in enumerate(neuronal_populations["purkinje_cell"]["cell_ids"]):
+            syn_param["vt_num"] = float(n)
             syn_param["meta_l"] = meta_l_set
-            indexes = np.where(ids_PC_post == pc_id)[0]
+            indexes = np.where(ids_PC_post == id_PC)[0]
             pre_neurons = np.array(ids_GrC_pre)[indexes]
             post_neurons = np.array(ids_PC_post)[indexes]
             nest.Connect(pre_neurons,post_neurons, {"rule": "one_to_one"}, syn_param)
@@ -154,6 +154,7 @@ for conn_model in connection_models:
             "weight": 1.0,
             "delay": 1.0,
         }
+
         for n, id_PC in enumerate(neuronal_populations["purkinje_cell"]["cell_ids"]):
             io_pc = connectivity["io_to_purkinje"]["id_pre"][
                 np.where(connectivity["io_to_purkinje"]["id_post"] == id_PC)[0]
