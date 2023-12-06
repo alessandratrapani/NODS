@@ -126,6 +126,7 @@ dmypy.json
 #results folder
 nods/visualizer.py
 results/
+data/
 cerebellum_NODS.hdf5
 cerebellum_NODS_smaller.hdf5
 p.p
