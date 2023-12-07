@@ -65,7 +65,6 @@ description = "one_vt_per_PC"
 NO_dependency = False
 plot = False
 # %%-------------------------------------------CREATE NETWORK---------------------
-# the order of creation of the
 for cell_name in list(neuronal_populations.keys()):
     print(f"Creating {cell_name} population")
     nest.CopyModel(net_config["cell_types"][cell_name]["neuron_model"], cell_name)
@@ -359,7 +358,7 @@ for trial in range(n_trials + 1):
     t = time.time() - t0
     print("Time: ", t)
 
-# %%-------------------------------------------PLOT PC SDF MEAN OVER TRIALS-------# %%-------------------------------------------PLOT PC SDF MEAN OVER TRIALS-------
+# %%-------------------------------------------PLOT PC SDF MEAN OVER TRIALS-------# 
 """Plot PC sdf mean"""
 palette = list(reversed(sns.color_palette("viridis", n_trials).as_hex()))
 sm = plt.cm.ScalarMappable(cmap="viridis_r", norm=plt.Normalize(vmin=0, vmax=n_trials))
@@ -367,7 +366,6 @@ cell = "pc_spikes"
 step = 50
 sdf_mean_cell = []
 sdf_maf_cell = []
-
 for trial in range(n_trials):
     start = trial * between_start
     stop = CS_start_first + CS_burst_dur + trial * between_start
@@ -389,6 +387,7 @@ plt.axvline(CS_start_first + CS_burst_dur, label="CS & US end ", c="red")
 # plt.xticks(np.arange(0,351,50), np.arange(50,401,50))
 plt.legend()
 plt.colorbar(sm, label="Trial")
+plt.show()
 fig.savefig(description+'.png')
 # %%-------------------------------------------SAVE SIMULATION DESCRIPTION--------
 from datetime import datetime
@@ -418,6 +417,7 @@ readme_content = f"""# Simulation Parameters
 with open('./sim_description.md', "w") as readme_file:
     readme_file.write(readme_content)
 # %%-------------------------------------------PLOT NETWORK ACTIVITY--------------TODO improve plots
+
 devices = list(net_config["devices"].keys())
 for device_name in devices:
     if "record" in device_name:
@@ -434,7 +434,7 @@ for device_name in devices:
                 png=False,
                 scatter=True,
                 png_scatter=False,
-                dir="./results/all_vt/",
+                dir="./results/20231206_171158/",
             )
             plt.show()
         except:
