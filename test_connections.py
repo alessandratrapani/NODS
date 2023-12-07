@@ -68,7 +68,7 @@ for cell_name in list(neuronal_populations.keys()):
         cell_name, neuronal_populations[cell_name]["numerosity"]
     )
 
-multiple_vt = True
+multiple_vt = False
 # %%-------------------------------------------MULTIPLE VT-------------
 if multiple_vt:
     # create one volume transmitter for each pf-PC synapses
@@ -173,6 +173,7 @@ if multiple_vt:
                 {"rule": "one_to_one"},
                 syn_param,
             )
+        
     # check:
     for vt_num, vt_id in enumerate(vt):
         # assert that vt_id is the same as listed in connectivity["parallel_fiber_to_purkinje"]
@@ -189,7 +190,7 @@ if multiple_vt:
         assert connectivity["parallel_fiber_to_purkinje"]["id_post"][vt_num] in id_pc_post_cf
 # %%-------------------------------------------SINGLE VT-------------
 if not multiple_vt:
-    # create one volume transmitter for each PC
+    print("One vt per PC")
     num_syn = neuronal_populations["purkinje_cell"]["numerosity"]
     vt = nest.Create("volume_transmitter_alberto", num_syn)
 
@@ -273,7 +274,7 @@ if not multiple_vt:
                     np.where(connectivity["io_to_purkinje"]["id_post"] == id_PC)[0]
                 ]
                 nest.Connect([io_pc[0]], [vt[n]], {"rule": "one_to_one"}, syn_param)
-            cfs = nest.GetConnections(neuronal_populations["io_cell"]["cell_ids"],vt)
+            cfs = nest.GetConnections(neuronal_populations["io_cell"]["cell_ids"])
 
         else:
             syn_param = {
@@ -290,15 +291,18 @@ if not multiple_vt:
                 {"rule": "one_to_one"},
                 syn_param,
             )
-    # check:
+   
+    # check:    
     for n, syn in enumerate(cfs):
         id_io_pre_cf = syn[0]
         id_vt = syn[1]
-        # extract the pc connected to the io connected to the current vt_id 
-        id_pc_post_cf = connectivity["io_to_purkinje"]["id_post"][
-            np.where(connectivity["io_to_purkinje"]["id_pre"] == id_io_pre_cf)[0]
-        ]
-        # assert that the current pc_id is the same as listed in neuronal_populations["purkinje_cell"]["cell_ids"]
-        assert id_pc_post_cf == neuronal_populations["purkinje_cell"]["cell_ids"][vt_num]
-
+        if id_vt in vt:
+            # extract the pc connected to the io connected to the current vt_id 
+            id_pc_post_cf = connectivity["io_to_purkinje"]["id_post"][
+                np.where(connectivity["io_to_purkinje"]["id_pre"] == id_io_pre_cf)[0]
+            ]
+            
+            vt_num = np.where(np.array(vt)==id_vt)[0]
+            # assert that the current pc_id is the same as listed in neuronal_populations["purkinje_cell"]["cell_ids"]
+            assert neuronal_populations["purkinje_cell"]["cell_ids"][vt_num[0]] in id_pc_post_cf
 # %%
