@@ -489,17 +489,10 @@
         "parallel_fiber_to_purkinje": {
             "pre": "granule_cell",
             "post": "purkinje_cell",
-            "plastic": true,
-            "hetero": true,
-            "teaching": "io_to_purkinje",
-            "synapse_model": "stdp_synapse_sinexp",
             "weight": 0.13589182863258192,
             "delay": 5.0,
-            "parameters": {
-                "A_minus": -0.15,
-                "A_plus": 0.05,
-                "Wmin": 0.0,
-                "Wmax": 6.0
+            "synapse": {
+                "static_synapse": {}
             }
         },
         "ascending_axon_to_purkinje": {

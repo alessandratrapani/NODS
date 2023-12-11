@@ -25,6 +25,6 @@ def move_files_to_folder(source_folder, destination_folder, file_prefixes):
 # Example usage
 source_folder = "./"  
 destination_folder = "./results"  
-file_prefixes = ["glom_spikes","pc_spikes","io_spikes","golgi_spikes","basket_spikes","stellate_spikes","granule_spikes","pf-PC","sim_description"]
+file_prefixes = ["glom_spikes","pc_spikes","io_spikes","golgi_spikes","basket_spikes","stellate_spikes","granule_spikes","pf-PC","sim_description","one_vt"]
 
 move_files_to_folder(source_folder, destination_folder, file_prefixes)

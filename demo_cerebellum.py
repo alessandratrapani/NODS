@@ -60,9 +60,7 @@ pc_color = net_config["cell_types"]["purkinje_cell"]["color"][0]
 grc_color = net_config["cell_types"]["granule_cell"]["color"][0]
 nos_color = "#82B366"
 # %%**************SIMULATION DESCRIPTION*****
-description = "one_vt_per_pf-PC_syn"
-# %%**************NO DEPENDENCY**************
-NO_dependency = False
+description = "one_vt_per_pf-PC_syn_static"
 plot = False
 # %%-------------------------------------------CREATE NETWORK---------------------
 for cell_name in list(neuronal_populations.keys()):
@@ -105,10 +103,6 @@ if "io_to_vt" not in connectivity.keys():
     create_io_to_vt_dict(connectivity, network_connectivity_file)
 # %%-------------------------------------------CONNECT NETWORK---------------------
 connection_models = list(net_config["connection_models"].keys())
-if NO_dependency:
-    meta_l_set = np.zeros((num_syn))
-else:
-    meta_l_set = np.ones((num_syn))
 
 for conn_model in connection_models:
     pre = net_config["connection_models"][conn_model]["pre"]
@@ -125,59 +119,6 @@ for conn_model in connection_models:
 
         t = time.time() - t0
         print("volume transmitter created in: ", t, " sec")
-
-        # Create weight recorder
-        recdict2 = {
-            "to_memory": False,
-            "to_file": True,
-            "label": "pf-PC_",
-            "senders": neuronal_populations["granule_cell"]["cell_ids"],
-            "targets": neuronal_populations["purkinje_cell"]["cell_ids"],
-        }
-        WeightPFPC = nest.Create("weight_recorder", params=recdict2)
-
-        # Connect pf and PC
-        print("Set connectivity parameters for pf-PC stdp synapse model")
-        nest.SetDefaults(
-            net_config["connection_models"][conn_model]["synapse_model"],
-            {
-                "A_minus": net_config["connection_models"][conn_model]["parameters"][
-                    "A_minus"
-                ],
-                "A_plus": net_config["connection_models"][conn_model]["parameters"][
-                    "A_plus"
-                ],
-                "Wmin": net_config["connection_models"][conn_model]["parameters"][
-                    "Wmin"
-                ],
-                "Wmax": net_config["connection_models"][conn_model]["parameters"][
-                    "Wmax"
-                ],
-                "vt": vt[0],
-                "weight_recorder": WeightPFPC[0],
-            },
-        )
-        syn_param = {
-            "model": net_config["connection_models"][conn_model]["synapse_model"],
-            "weight": net_config["connection_models"][conn_model]["weight"]
-            * np.ones(num_syn),
-            "delay": net_config["connection_models"][conn_model]["delay"]
-            * np.ones(num_syn),
-            "receptor_type": net_config["cell_types"]["purkinje_cell"]["receptors"][
-                "granule_cell"
-            ],
-            "vt_num": np.arange(num_syn),
-            "meta_l": meta_l_set,
-        }
-
-        granule_ids = connectivity[conn_model]["id_pre"]
-        purkinje_ids = connectivity[conn_model]["id_post"]
-        nest.Connect(
-            granule_ids,
-            purkinje_ids,
-            {"rule": "one_to_one"},
-            syn_param,
-        )
 
         # Connect io and vt
         syn_param = {

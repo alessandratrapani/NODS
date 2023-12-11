@@ -60,9 +60,7 @@ pc_color = net_config["cell_types"]["purkinje_cell"]["color"][0]
 grc_color = net_config["cell_types"]["granule_cell"]["color"][0]
 nos_color = "#82B366"
 # %%**************SIMULATION DESCRIPTION*****
-description = "one_vt_per_PC"
-# %%**************NO DEPENDENCY**************
-NO_dependency = False
+description = "one_vt_per_PC_static"
 plot = False
 # %%-------------------------------------------CREATE NETWORK---------------------
 for cell_name in list(neuronal_populations.keys()):
@@ -78,10 +76,6 @@ vt = nest.Create("volume_transmitter_alberto", num_syn)
 
 # %%-------------------------------------------CONNECT NETWORK---------------------
 connection_models = list(net_config["connection_models"].keys())
-if NO_dependency:
-    meta_l_set = 0.0
-else:
-    meta_l_set = 1.1
 
 for conn_model in connection_models:
     pre = net_config["connection_models"][conn_model]["pre"]
@@ -97,55 +91,6 @@ for conn_model in connection_models:
 
         t = time.time() - t0
         print("volume transmitter created in: ", t, " sec")
-
-        # Create weight recorder
-        recdict2 = {
-            "to_memory": False,
-            "to_file": True,
-            "label": "pf-PC_",
-            "senders": neuronal_populations[pre]["cell_ids"],
-            "targets": neuronal_populations[post]["cell_ids"],
-        }
-        WeightPFPC = nest.Create("weight_recorder", params=recdict2)
-
-        # Connect pf and PC
-        print("Set connectivity parameters for pf-PC stdp synapse model")
-        nest.SetDefaults(
-            net_config["connection_models"][conn_model]["synapse_model"],
-            {
-                "A_minus": net_config["connection_models"][conn_model]["parameters"][
-                    "A_minus"
-                ],
-                "A_plus": net_config["connection_models"][conn_model]["parameters"][
-                    "A_plus"
-                ],
-                "Wmin": net_config["connection_models"][conn_model]["parameters"][
-                    "Wmin"
-                ],
-                "Wmax": net_config["connection_models"][conn_model]["parameters"][
-                    "Wmax"
-                ],
-                "vt": vt[0],
-                "weight_recorder": WeightPFPC[0],
-            },
-        )
-        syn_param = {
-            "model": net_config["connection_models"][conn_model]["synapse_model"],
-            "weight": net_config["connection_models"][conn_model]["weight"],
-            "delay": net_config["connection_models"][conn_model]["delay"],
-            "receptor_type": net_config["cell_types"]["purkinje_cell"]["receptors"][
-                "granule_cell"
-            ],
-        }
-        ids_GrC_pre = connectivity[conn_model]["id_pre"]
-        ids_PC_post = connectivity[conn_model]["id_post"]
-        for n, id_PC in enumerate(neuronal_populations["purkinje_cell"]["cell_ids"]):
-            syn_param["vt_num"] = float(n)
-            syn_param["meta_l"] = meta_l_set
-            indexes = np.where(ids_PC_post == id_PC)[0]
-            pre_neurons = np.array(ids_GrC_pre)[indexes]
-            post_neurons = np.array(ids_PC_post)[indexes]
-            nest.Connect(pre_neurons,post_neurons, {"rule": "one_to_one"}, syn_param)
 
         # Connect io and vt
         syn_param = {
@@ -404,11 +349,8 @@ readme_content = f"""# Simulation Parameters
                 - CS_rate: {net_config["devices"]["CS"]["parameters"]["rate"]}
                 - US_rate: {net_config["devices"]["US"]["parameters"]["rate"]}
                 - noise_rate:{net_config["devices"]["background_noise"]["parameters"]["rate"]}
-                - A_minus: {net_config["connection_models"]["parallel_fiber_to_purkinje"]["parameters"]["A_minus"]}
-                - A_plus: {net_config["connection_models"]["parallel_fiber_to_purkinje"]["parameters"]["A_plus"]}
-                - Wmin: {net_config["connection_models"]["parallel_fiber_to_purkinje"]["parameters"]["Wmin"]}
-                - Wmax: {net_config["connection_models"]["parallel_fiber_to_purkinje"]["parameters"]["Wmax"]}
-
+                - pf-PC static synapses
+                - weight:{net_config["connection_models"]["parallel_fiber_to_purkinje"]["weight"]}
                 ## Description
                 {description}
                 """
