@@ -22,9 +22,10 @@ def move_files_to_folder(source_folder, destination_folder, file_prefixes):
                 shutil.move(source_path, destination_path)
                 print(f"Moved {filename} to {destination_folder_with_datetime}")
 
-# Example usage
-source_folder = "./"  
-destination_folder = "./results"  
-file_prefixes = ["glom_spikes","pc_spikes","io_spikes","golgi_spikes","basket_spikes","stellate_spikes","granule_spikes","pf-PC","sim_description"]
+if __name__ == "__main__":
+    # Example usage
+    source_folder = "./"  
+    destination_folder = "./results"  
+    file_prefixes = ["glom_spikes","pc_spikes","io_spikes","golgi_spikes","basket_spikes","stellate_spikes","granule_spikes","pf-PC","sim_description","1_"]
 
-move_files_to_folder(source_folder, destination_folder, file_prefixes)
+    move_files_to_folder(source_folder, destination_folder, file_prefixes)

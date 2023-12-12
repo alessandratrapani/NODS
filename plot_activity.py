@@ -22,13 +22,13 @@ CS_burst_dur = net_config["devices"]["CS"]["parameters"]["burst_dur"]
 US_start_first = net_config["devices"]["US"]["parameters"]["start_first"]
 
 #results_path = "./results/20231206_171158/" #multiple_vt
-results_path = "./results/20231206_173402/" #single vt
+results_path = "./" #single vt
 
-"""Plot PC sdf mean"""
+
 palette = list(reversed(sns.color_palette("viridis", n_trials).as_hex()))
 sm = plt.cm.ScalarMappable(cmap="viridis_r", norm=plt.Normalize(vmin=0, vmax=n_trials))
-cell = "granule_spikes"
-step = 5
+cell = "pc_spikes"
+step = 50
 sdf_mean_cell = []
 sdf_maf_cell = []
 for trial in range(n_trials):
