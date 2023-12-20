@@ -65,7 +65,6 @@ description = "one_vt_per_pf-PC_syn"
 NO_dependency = False
 plot = False
 # %%-------------------------------------------CREATE NETWORK---------------------
-# the order of creation of the
 for cell_name in list(neuronal_populations.keys()):
     print(f"Creating {cell_name} population")
     nest.CopyModel(net_config["cell_types"][cell_name]["neuron_model"], cell_name)
@@ -77,7 +76,6 @@ for cell_name in list(neuronal_populations.keys()):
 num_syn = len(connectivity["parallel_fiber_to_purkinje"]["id_pre"])
 vt = nest.Create("volume_transmitter_alberto", num_syn)
 connectivity["parallel_fiber_to_purkinje"]["id_vt"] = vt
-
 
 # %% if "io_to_vt" is not already in connectivity, it creates io_to_vt dict
 def create_io_to_vt_dict(connectivity, network_connectivity_file):
