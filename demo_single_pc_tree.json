@@ -2,18 +2,17 @@
         "MF_num": 100,
         "GR_num": 2000,
         "PC_num": 2,
-        "IO_num": 2,
-        "DCN_num": 1
+        "IO_num": 2
     },
     
     "connections":{
-        "LTP1":0.005,
-        "LTD1": -0.02,
-        "Init_PCDCN":-1.0,
-        "Init_MFDCN": 0.4
+        "A_plus":0.008,
+        "A_minus": -0.02,
+        "Wmin":0.0,
+        "Wmax":4.0
     },
     "protocol":{
-        "n_trial": 20,
+        "n_trial": 15,
         "trial_len": 580,
         "input_rate" : 40.0,
         "error_rate": 500.0,
@@ -21,7 +20,8 @@
         "start_CS": 200.0,
         "stop_CS": 380.0,
         "start_US": 350.0,
-        "stop_US": 380.0
+        "stop_US": 380.0,
+        "NO_threshold": 130
     },
     "colors" : {
         "purkinje_cell": ["#9673A6","E1D5E7"],
