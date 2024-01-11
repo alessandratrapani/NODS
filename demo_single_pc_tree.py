@@ -538,18 +538,19 @@ for trial in range(n_trial):
     axes[trial].set_title("Trial " + str(trial))
 #'''
 # %%-------------------------------------------PLOT NETWORK ACTIVITY--------------TODO improve plots
-'''
+from nods.plot import plot_cell_activity
+
 plot_cell_activity(
-    trial_len=trial_len,
-    n_trial=n_trial,
-    delta_t=trial_len,
-    cell_number=PC_num,
-    cell_name="PC",
+    trial_len=580,
+    n_trial=5,
+    delta_t=10,
+    cell_number=2,
+    cell_name="purkinje",
     freq_plot=True,
     png=False,
     scatter=True,
     png_scatter=False,
-    dir="",
+    dir="./results/test_extrinsic_rob/20231221_124044/",
 )
 plt.show()
 #'''

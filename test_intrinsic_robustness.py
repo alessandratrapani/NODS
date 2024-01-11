@@ -520,9 +520,8 @@ if __name__ == "__main__":
         -0.02,
         -0.02,
     ]
-    NO_dependency_list = np.append(
-        np.zeros((len(A_plus_values))), np.ones((len(A_plus_values)))
-    )
+    # NO_dependency_list = np.append(np.zeros((len(A_plus_values)/2)), np.ones((len(A_plus_values)/2)))
+    NO_dependency_list = np.ones((len(A_plus_values)))
 
     params_filename = "model_parameters.json"
     root_path = "./nods/"
@@ -564,7 +563,7 @@ if __name__ == "__main__":
         simulation.generate_sim_description(description=description)
 
         source_folder = "./"
-        destination_folder = "./results/test_extrinsic_rob"
+        destination_folder = "./results/test_intrinsic_rob"
         file_prefixes = [
             "granule",
             "purkinje",
