@@ -96,21 +96,22 @@ def get_spike_activity(cell_name, path = ''):
     else:
         pthDat = path
     files = [f for f in os.listdir(pthDat) if os.path.isfile(os.path.join(pthDat,f))]
-    for f in files:
-        if f.startswith(cell_name):
-            break
-    cell_f = open(pthDat+f,'r').read()
-    cell_f = cell_f.split('\n')
     ID_cell = []
     time_cell = []
-    for i in range(len(cell_f)-1):
-        splitted_string = cell_f[i].split('\t')
-        ID_cell.append(float(splitted_string[0]))
-        time_cell.append(float(splitted_string[1]))
-        
+    for f in files:
+        if f.startswith(cell_name):            
+            cell_f = open(pthDat+f,'r').read()
+            cell_f = cell_f.split('\n')
+            for i in range(len(cell_f)-1):
+                splitted_string = cell_f[i].split('\t')
+                ID_cell.append(float(splitted_string[0]))
+                time_cell.append(float(splitted_string[1]))
+                
     sources_activity_df = pd.DataFrame({'source_id':ID_cell,'spike_time':time_cell})
     neurons_activity = np.array([ID_cell,time_cell])
+
     return neurons_activity.T
+
 def get_spike_values(nest, sd_list, pop_names):
     """ Function to select spike idxs and times from spike_det events
         Returns a list of dictionaries with spikes and times  """
