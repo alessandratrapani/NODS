@@ -496,8 +496,8 @@
             "weight": 0.13589182863258192,
             "delay": 5.0,
             "parameters": {
-                "A_minus": -0.15,
-                "A_plus": 0.05,
+                "A_minus": -0.00002,
+                "A_plus": 0.000002,
                 "Wmin": 0.0,
                 "Wmax": 6.0
             }
@@ -530,7 +530,7 @@
                 "glomerulus"
             ],
             "parameters": {
-                "rate": 0.0,
+                "rate": 4.0,
                 "start": 0.0,
                 "stop": 50500.0
             }
@@ -547,7 +547,7 @@
                 "burst_dur": 280,
                 "rate": 40.0,
                 "between_start": 500,
-                "n_trials": 16
+                "n_trials": 101
             },
             "connection": {
                 "rule": "one_to_one"
@@ -566,7 +566,7 @@
                 "burst_dur": 30,
                 "rate": 200.0,
                 "between_start": 500,
-                "n_trials": 15
+                "n_trials": 100
             },
             "connection": {
                 "rule": "all_to_all"
