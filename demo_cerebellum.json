@@ -2,7 +2,9 @@
     "cell_types": {
         "mossy_fibers": {
             "display_name": "Mossy fibers",
-            "neuron_model": "parrot_neuron"
+            "neuron_model": "parrot_neuron",
+            "parameters": {}
+
         },
         "glomerulus": {
             "display_name": "Glomerulus",
@@ -14,7 +16,8 @@
                 "radius": 1.5,
                 "density": 0.0003
             },
-            "neuron_model": "parrot_neuron"
+            "neuron_model": "parrot_neuron",
+            "parameters": {}
         },
         "granule_cell": {
             "display_name": "Granule cell",
@@ -232,7 +235,7 @@
         },
         "io_cell": {
             "display_name": "Inferior olive",
-            "neuron_model": "eglif_cond_alpha_multisyn",
+            "neuron_model": "iaf_cond_alpha",
             "color": [
                 "#B85450",
                 "#DAE8FC"
@@ -242,27 +245,11 @@
                 "C_m": 189.0,
                 "V_th": -35.0,
                 "V_reset": -45.0,
-                "E_L": -45.0,
-                "Vmin": -60.0,
-                "Vinit": -45.0,
-                "lambda_0": 1.2,
-                "tau_V": 0.8,
-                "tau_m": 11.0,
-                "I_e": -18.101,
-                "kadap": 1.928,
-                "k1": 0.191,
-                "k2": 0.091,
-                "A1": 1810.923,
-                "A2": 1358.197,
-                "tau_syn1": 1.0,
-                "tau_syn2": 60.0,
-                "tau_syn3": 1.0,
-                "E_rev1": 0.0,
-                "E_rev2": -80.0,
-                "E_rev3": 0.0
-            },
-            "receptors": {
-                "dcn_GABA": 2
+                "E_L": -45.0,            
+                "I_e": 0.0,
+                "tau_syn_ex": 1.0,
+                "tau_syn_in": 60.0,
+                "g_L": 17.18
             }
         },
         "dcn_cell_glut_large": {
@@ -496,8 +483,8 @@
             "weight": 0.13589182863258192,
             "delay": 5.0,
             "parameters": {
-                "A_minus": -0.00002,
-                "A_plus": 0.000002,
+                "A_minus": -0.0002,
+                "A_plus": 0.00002,
                 "Wmin": 0.0,
                 "Wmax": 6.0
             }
@@ -547,7 +534,7 @@
                 "burst_dur": 280,
                 "rate": 40.0,
                 "between_start": 500,
-                "n_trials": 101
+                "n_trials": 6
             },
             "connection": {
                 "rule": "one_to_one"
@@ -564,18 +551,17 @@
                 "purpose": "US",
                 "start_first": 850,
                 "burst_dur": 30,
-                "rate": 200.0,
+                "rate": 500.0,
                 "between_start": 500,
-                "n_trials": 100
+                "n_trials": 5
             },
             "connection": {
                 "rule": "all_to_all"
             },
             "synapse": {
                 "model": "static_synapse",
-                "weight": 10.0,
-                "delay": 1.0,
-                "receptor_type": 1
+                "weight": 300.0,
+                "delay": 1.0
             }
         },
         "record_glomerulus_spikes": {

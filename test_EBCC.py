@@ -85,6 +85,7 @@ class TestEBCC:
             self.neuronal_populations[cell_name]["cell_ids"] = nest.Create(
                 cell_name, self.neuronal_populations[cell_name]["numerosity"]
             )
+            nest.SetDefaults(cell_name, self.net_config["cell_types"][cell_name]["parameters"])
 
     def create_vt(self, vt_modality) -> None:
         if vt_modality == "1_vt_PC":
@@ -478,17 +479,11 @@ class TestEBCC:
             self.net_config["devices"]["US"]["device"],
             params={"spike_times": US_matrix},
         )
-        conn_param = {
-            "model": "static_synapse",
-            "weight": 1,
-            "delay": 1,
-            "receptor_type": 1,
-        }
         nest.Connect(
             US_device,
             self.neuronal_populations["io_cell"]["cell_ids"],
-            {"rule": "all_to_all"},
-            conn_param,
+            self.net_config["devices"]["US"]["connection"],
+            self.net_config["devices"]["US"]["synapse"]
         )
 
     def define_bg_noise(self) -> None:
@@ -532,9 +527,9 @@ class TestEBCC:
     def simulate_network(self) -> None:
         print("simulate")
         print("Single trial length: ", self.between_start)
-        for trial in range(self.n_trials + 1):
+        for trial in range(self.n_trials):
             t0 = time.time()
-            print("Trial ", trial + 1, "over ", self.n_trials)
+            print("Trial ", trial, "over ", self.n_trials)
             nest.Simulate(self.between_start)
             t = time.time() - t0
             print("Time: ", t)
