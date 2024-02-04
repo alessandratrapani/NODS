@@ -43,6 +43,7 @@ class TestEBCC:
                         - A_plus: {self.net_config["connection_models"]["parallel_fiber_to_purkinje"]["parameters"]["A_plus"]}
                         - Wmin: {self.net_config["connection_models"]["parallel_fiber_to_purkinje"]["parameters"]["Wmin"]}
                         - Wmax: {self.net_config["connection_models"]["parallel_fiber_to_purkinje"]["parameters"]["Wmax"]}
+                        - CS_radius: {self.net_config["devices"]["CS"]["radius"]}
 
                         ## Description
                         {self.simulation_description}
@@ -51,7 +52,7 @@ class TestEBCC:
                         """
 
         # Write the README content to a file
-        with open("./sim_description.md", "w") as readme_file:
+        with open("./aa_sim_description.md", "w") as readme_file:
             readme_file.write(readme_content)
 
     def set_nest_kernel(self) -> None:
@@ -85,7 +86,9 @@ class TestEBCC:
             self.neuronal_populations[cell_name]["cell_ids"] = nest.Create(
                 cell_name, self.neuronal_populations[cell_name]["numerosity"]
             )
-            nest.SetDefaults(cell_name, self.net_config["cell_types"][cell_name]["parameters"])
+            nest.SetDefaults(
+                cell_name, self.net_config["cell_types"][cell_name]["parameters"]
+            )
 
     def create_vt(self, vt_modality) -> None:
         if vt_modality == "1_vt_PC":
@@ -306,6 +309,22 @@ class TestEBCC:
 
                 else:
                     print("vt_modality must be either <1_vt_PC> or <1_vt_pf-PC>")
+            elif conn_model == "mossy_to_glomerulus":
+                syn_param = {
+                    "model": "static_synapse",
+                    "weight": self.net_config["connection_models"][conn_model][
+                        "weight"
+                    ],
+                    "delay": self.net_config["connection_models"][conn_model]["delay"]
+                }          
+                id_pre = self.connectivity[conn_model]["id_pre"]
+                id_post = self.connectivity[conn_model]["id_post"]
+                nest.Connect(
+                    id_pre,
+                    id_post,
+                    {"rule": "one_to_one"},
+                    syn_param,
+                )      
             else:
                 syn_param = {
                     "model": "static_synapse",
@@ -350,7 +369,12 @@ class TestEBCC:
         in_range_mask = np.sum((ps[:, [0, 2]] - origin) ** 2, axis=1) < radius**2
         index = np.array(self.neuronal_populations["glomerulus"]["cell_ids"])
         self.id_map_glom = list(index[in_range_mask])
-
+        glom_ids_post = self.connectivity["mossy_to_glomerulus"]["id_post"]
+        mossy_ids_pre = self.connectivity["mossy_to_glomerulus"]["id_pre"]
+        self.id_map_mf = mossy_ids_pre[
+            np.in1d(np.array(glom_ids_post), np.unique(self.id_map_glom))
+        ]
+        self.id_map_mf = np.unique(self.id_map_mf)
         if plot:
             # Plot stimulus geometry
             xpos = ps[:, 0]
@@ -369,11 +393,11 @@ class TestEBCC:
                 )
             )
 
-            glom_ids_post = self.connectivity["glomerulus_to_granule"]["id_pre"]
-            granule_ids_pre = self.connectivity["glomerulus_to_granule"]["id_post"]
-            granule_ids_pre = np.array(granule_ids_pre)
-            id_map_grc = granule_ids_pre[
-                np.in1d(np.array(glom_ids_post), np.unique(self.id_map_glom))
+            glom_ids_pre = self.connectivity["glomerulus_to_granule"]["id_pre"]
+            granule_ids_post = self.connectivity["glomerulus_to_granule"]["id_post"]
+            granule_ids_post = np.array(granule_ids_post)
+            id_map_grc = granule_ids_post[
+                np.in1d(np.array(glom_ids_pre), np.unique(self.id_map_glom))
             ]
             ps = self.neuronal_populations["granule_cell"]["cell_pos"]
             xpos = ps[:, 0]
@@ -421,17 +445,18 @@ class TestEBCC:
             self.net_config["devices"]["CS"]["parameters"]["start_first"]
         )
         CS_f_rate = self.net_config["devices"]["CS"]["parameters"]["rate"]
-        CS_n_spikes = int(
-            self.net_config["devices"]["CS"]["parameters"]["rate"] * CS_burst_dur / 1000
-        )
+        CS_n_spikes = int(CS_f_rate * CS_burst_dur / 1000)
         self.between_start = self.net_config["devices"]["CS"]["parameters"][
             "between_start"
         ]
         self.n_trials = self.net_config["devices"]["CS"]["parameters"]["n_trials"]
-        CS_isi = int(CS_burst_dur / CS_n_spikes)
-
-        CS_matrix_start_pre = np.round((np.linspace(100.0, 228.0, 11)))
-        CS_matrix_start_post = np.round((np.linspace(240.0, 368.0, 11)))
+        n_CS_device = len(self.id_map_mf)
+        t0 = CS_start_first
+        t1 = CS_start_first + (CS_burst_dur / 2) - (n_CS_device / 2)
+        t2 = CS_start_first + (CS_burst_dur / 2)
+        t3 = CS_start_first + CS_burst_dur - (n_CS_device / 2)
+        CS_matrix_start_pre = np.round((np.linspace(t0, t1, CS_n_spikes)))
+        CS_matrix_start_post = np.round((np.linspace(t2, t3, CS_n_spikes)))
         CS_matrix_first_pre = np.concatenate(
             [CS_matrix_start_pre + self.between_start * t for t in range(self.n_trials)]
         )
@@ -442,20 +467,19 @@ class TestEBCC:
             ]
         )
 
+        CS_device = nest.Create(self.net_config["devices"]["CS"]["device"], n_CS_device)
+
         CS_matrix = []
-        for i in range(int(len(self.id_map_glom) / 2)):
+        for i in range(int(n_CS_device / 2)):
             CS_matrix.append(CS_matrix_first_pre + i)
             CS_matrix.append(CS_matrix_first_post + i)
-
-        CS_device = nest.Create(
-            self.net_config["devices"]["CS"]["device"], len(self.id_map_glom)
-        )
 
         for sg in range(len(CS_device) - 1):
             nest.SetStatus(
                 CS_device[sg : sg + 1], params={"spike_times": CS_matrix[sg].tolist()}
             )
-        nest.Connect(CS_device, self.id_map_glom, "all_to_all")
+        # conn_spec_dict = {"rule": "fixed_indegree", "indegree": 20}
+        nest.Connect(CS_device, list(self.id_map_mf), "one_to_one")
 
     def define_US_stimuli(self) -> None:
         print("US stimulus")
@@ -483,7 +507,7 @@ class TestEBCC:
             US_device,
             self.neuronal_populations["io_cell"]["cell_ids"],
             self.net_config["devices"]["US"]["connection"],
-            self.net_config["devices"]["US"]["synapse"]
+            self.net_config["devices"]["US"]["synapse"],
         )
 
     def define_bg_noise(self) -> None:
@@ -536,8 +560,6 @@ class TestEBCC:
 
     def plot_cell_activity_over_trials(self, cell, step):
         import matplotlib.pyplot as plt
-        import matplotlib.colors as mcolors
-        import plotly.graph_objects as go
         import seaborn as sns
 
         CS_burst_dur = self.net_config["devices"]["CS"]["parameters"]["burst_dur"]
@@ -545,6 +567,8 @@ class TestEBCC:
             self.net_config["devices"]["CS"]["parameters"]["start_first"]
         )
         US_start_first = self.net_config["devices"]["US"]["parameters"]["start_first"]
+
+        spk = get_spike_activity(cell)
 
         palette = list(reversed(sns.color_palette("viridis", self.n_trials).as_hex()))
         sm = plt.cm.ScalarMappable(
@@ -555,7 +579,6 @@ class TestEBCC:
         for trial in range(self.n_trials):
             start = trial * self.between_start
             stop = CS_start_first + CS_burst_dur + trial * self.between_start
-            spk = get_spike_activity(cell)
             sdf_cell = sdf(start=start, stop=stop, spk=spk, step=step)
             sdf_mean_cell.append(sdf_mean(sdf_cell))
             sdf_maf_cell.append(sdf_maf(sdf_cell))
@@ -571,41 +594,65 @@ class TestEBCC:
         plt.axvline(CS_start_first + CS_burst_dur, label="CS & US end ", c="red")
         plt.legend()
         plt.colorbar(sm, label="Trial")
-        fig.savefig(f"{self.simulation_description}_{cell}.png")
+        fig.savefig(f"aa_sdf_{cell}.png")
+
+    def plot_cell_raster(self, cell):
+        import matplotlib.pyplot as plt
+        import seaborn as sns
+
+        CS_burst_dur = self.net_config["devices"]["CS"]["parameters"]["burst_dur"]
+        CS_start_first = float(
+            self.net_config["devices"]["CS"]["parameters"]["start_first"]
+        )
+        US_start_first = self.net_config["devices"]["US"]["parameters"]["start_first"]
+
+        spk = get_spike_activity(cell)
+        evs_cell = spk[:, 0]
+        n_cells = len(np.unique(evs_cell))
+        ts_cell = spk[:, 1]
+        title_plot = "Raster plot " + cell
+        y_min = np.min(evs_cell)
+        y = [i - y_min for i in evs_cell]
+        fig = plt.figure(figsize=(20, 10))
+        plt.scatter(ts_cell, y, marker=".", s=3)
+        plt.vlines(
+            np.arange(0, self.n_trials * self.between_start, self.between_start)
+            + CS_start_first,
+            0,
+            n_cells,
+            colors="grey",
+        )
+        plt.vlines(
+            np.arange(0, (self.n_trials - 1) * self.between_start, self.between_start)
+            + US_start_first,
+            0,
+            n_cells,
+            colors="black",
+        )
+        plt.vlines(
+            np.arange(0, self.n_trials * self.between_start, self.between_start)
+            + CS_start_first
+            + CS_burst_dur,
+            0,
+            n_cells,
+            colors="red",
+        )
+        plt.title(title_plot)
+        plt.xticks(ticks=np.linspace(0, self.n_trials * self.between_start, 4))
+        plt.yticks(ticks=np.linspace(0, n_cells, 10))
+        plt.xlabel("Time [ms]")
+        plt.ylabel("Neuron ID")
+        fig.savefig(f"aa_raster_{cell}.png")
 
 
 if __name__ == "__main__":
     from move_files import move_files_to_folder
 
     data_path = "./data/"
-    sim_combinations = dict(
-        simulation_description=[
-            "1_no_vt",
-            "1_vt_PC_not_connected",
-            "1_vt_pf-PC_not_connected",
-            "1_vt_PC_connecte_to_io_static",
-            "1_vt_PC_plastic_syn",
-            "1_vt_pf-PC_connecte_to_io_static",
-            "1_vt_pf-PC_plastic_syn",
-        ],
-        vt_modality=[
-            "",
-            "1_vt_PC",
-            "1_vt_pf-PC",
-            "1_vt_PC",
-            "1_vt_PC",
-            "1_vt_pf-PC",
-            "1_vt_pf-PC",
-        ],
-        connect_vt_to_io=[False, False, False, True, True, True, True],
-        plastic_pf_PC=[False, False, False, False, True, False, True],
-    )
-    index = 4
-
-    simulation_description = sim_combinations["simulation_description"][index]
-    vt_modality = sim_combinations["vt_modality"][index]
-    connect_vt_to_io = sim_combinations["connect_vt_to_io"][index]
-    plastic_pf_PC = sim_combinations["plastic_pf_PC"][index]
+    simulation_description = "1_vt_PC_plastic_syn"
+    vt_modality = "1_vt_PC"
+    connect_vt_to_io = True
+    plastic_pf_PC = True
     print(vt_modality)
     simulation = TestEBCC(
         data_path=data_path, simulation_description=simulation_description
@@ -634,6 +681,7 @@ if __name__ == "__main__":
     cell = "pc_spikes"
     step = 5
     simulation.plot_cell_activity_over_trials(cell=cell, step=step)
+    simulation.plot_cell_raster(cell=cell)
 
     source_folder = "./"
     destination_folder = "./results"
@@ -646,8 +694,7 @@ if __name__ == "__main__":
         "stellate_spikes",
         "granule_spikes",
         "pf-PC",
-        "sim_description",
-        "1_",
+        "aa_",
     ]
 
     move_files_to_folder(source_folder, destination_folder, file_prefixes)

@@ -357,6 +357,15 @@
         }
     },
     "connection_models": {
+        "mossy_to_glomerulus":{
+            "pre": "mossy_fibers",
+            "post": "glomerulus",
+            "weight": 1.0,
+            "delay": 1.0,
+            "synapse": {
+                "static_synapse": {}
+            }
+        },
         "glomerulus_to_granule": {
             "pre": "glomerulus",
             "post": "granule_cell",
@@ -483,10 +492,10 @@
             "weight": 0.13589182863258192,
             "delay": 5.0,
             "parameters": {
-                "A_minus": -0.0002,
-                "A_plus": 0.00002,
+                "A_minus": -0.00005,
+                "A_plus": 0.0001,
                 "Wmin": 0.0,
-                "Wmax": 6.0
+                "Wmax": 2.0
             }
         },
         "ascending_axon_to_purkinje": {
@@ -517,7 +526,7 @@
                 "glomerulus"
             ],
             "parameters": {
-                "rate": 4.0,
+                "rate": 0.0,
                 "start": 0.0,
                 "stop": 50500.0
             }
@@ -525,7 +534,7 @@
         "CS": {
             "device": "spike_generator",
             "io": "input",
-            "radius": 30,
+            "radius": 97,
             "x": 150,
             "z": 100,
             "parameters": {
