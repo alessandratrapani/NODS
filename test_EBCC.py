@@ -6,6 +6,7 @@ import time
 from nods.utils import *
 from nods.plot import plot_cell_activity
 import nest
+import random
 
 
 class TestEBCC:
@@ -18,7 +19,7 @@ class TestEBCC:
         """configure network geometry, self.connectivity, and models"""
         with open("./demo_cerebellum.json", "r") as json_file:
             self.net_config = json.load(json_file)
-        hdf5_file = "cerebellum_330x_200z.hdf5"
+        hdf5_file = "cerebellum_300x_200z.hdf5"
         network_geom_file = self.data_path + "geom_" + hdf5_file
         network_connectivity_file = self.data_path + "conn_" + hdf5_file
         self.neuronal_populations = dill.load(open(network_geom_file, "rb"))
@@ -112,47 +113,41 @@ class TestEBCC:
             pre = self.net_config["connection_models"][conn_model]["pre"]
             post = self.net_config["connection_models"][conn_model]["post"]
             print("Connecting ", pre, " to ", post, "(", conn_model, ")")
-            syn_param = {
-                "model": "static_synapse",
-                "weight": self.net_config["connection_models"][conn_model]["weight"],
-                "delay": self.net_config["connection_models"][conn_model]["delay"],
-                "receptor_type": self.net_config["cell_types"][post]["receptors"][pre],
-            }
-            id_pre = self.connectivity[conn_model]["id_pre"]
-            id_post = self.connectivity[conn_model]["id_post"]
-            nest.Connect(
-                id_pre,
-                id_post,
-                {"rule": "one_to_one"},
-                syn_param,
-            )
-
-        if connect_vt_to_io:
-            syn_param = {
-                "model": "static_synapse",
-                "weight": 1.0,
-                "delay": 1.0,
-            }
-            if vt_modality == "1_vt_PC":
-                for n, id_PC in enumerate(
-                    self.neuronal_populations["purkinje_cell"]["cell_ids"]
-                ):
-                    io_pc = self.connectivity["io_to_purkinje"]["id_pre"][
-                        np.where(
-                            self.connectivity["io_to_purkinje"]["id_post"] == id_PC
-                        )[0]
-                    ]
-                    nest.Connect(
-                        [io_pc[0]], [self.vt[n]], {"rule": "one_to_one"}, syn_param
-                    )
-
-            elif vt_modality == "1_vt_pf-PC":
-                io_ids = self.connectivity["io_to_vt"]["id_pre"]
-                vt_ids = self.connectivity["io_to_vt"]["id_post"]
-                nest.Connect(io_ids, vt_ids, {"rule": "one_to_one"}, syn_param)
-
+            if conn_model == "mossy_to_glomerulus":
+                syn_param = {
+                    "model": "static_synapse",
+                    "weight": self.net_config["connection_models"][conn_model][
+                        "weight"
+                    ],
+                    "delay": self.net_config["connection_models"][conn_model]["delay"],
+                }
+                id_pre = self.connectivity[conn_model]["id_pre"]
+                id_post = self.connectivity[conn_model]["id_post"]
+                nest.Connect(
+                    id_pre,
+                    id_post,
+                    {"rule": "one_to_one"},
+                    syn_param,
+                )
             else:
-                return
+                syn_param = {
+                    "model": "static_synapse",
+                    "weight": self.net_config["connection_models"][conn_model][
+                        "weight"
+                    ],
+                    "delay": self.net_config["connection_models"][conn_model]["delay"],
+                    "receptor_type": self.net_config["cell_types"][post]["receptors"][
+                        pre
+                    ],
+                }
+                id_pre = self.connectivity[conn_model]["id_pre"]
+                id_post = self.connectivity[conn_model]["id_post"]
+                nest.Connect(
+                    id_pre,
+                    id_post,
+                    {"rule": "one_to_one"},
+                    syn_param,
+                )
 
     def connect_network_plastic_syn(self, vt_modality) -> None:
         connection_models = list(self.net_config["connection_models"].keys())
@@ -315,8 +310,8 @@ class TestEBCC:
                     "weight": self.net_config["connection_models"][conn_model][
                         "weight"
                     ],
-                    "delay": self.net_config["connection_models"][conn_model]["delay"]
-                }          
+                    "delay": self.net_config["connection_models"][conn_model]["delay"],
+                }
                 id_pre = self.connectivity[conn_model]["id_pre"]
                 id_post = self.connectivity[conn_model]["id_post"]
                 nest.Connect(
@@ -324,7 +319,7 @@ class TestEBCC:
                     id_post,
                     {"rule": "one_to_one"},
                     syn_param,
-                )      
+                )
             else:
                 syn_param = {
                     "model": "static_synapse",
@@ -478,8 +473,9 @@ class TestEBCC:
             nest.SetStatus(
                 CS_device[sg : sg + 1], params={"spike_times": CS_matrix[sg].tolist()}
             )
-        # conn_spec_dict = {"rule": "fixed_indegree", "indegree": 20}
-        nest.Connect(CS_device, list(self.id_map_mf), "one_to_one")
+
+        mf_ids = random.sample(list(self.id_map_mf), len(CS_device))
+        nest.Connect(CS_device, mf_ids, "one_to_one")
 
     def define_US_stimuli(self) -> None:
         print("US stimulus")
