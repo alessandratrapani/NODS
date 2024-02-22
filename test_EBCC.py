@@ -24,7 +24,10 @@ class TestEBCC:
         network_connectivity_file = self.data_path + "conn_" + hdf5_file
         self.neuronal_populations = dill.load(open(network_geom_file, "rb"))
         self.connectivity = dill.load(open(network_connectivity_file, "rb"))
-
+        self.n_trials = self.net_config["devices"]["CS"]["parameters"]["n_trials"]
+        self.between_start = self.net_config["devices"]["CS"]["parameters"][
+            "between_start"
+        ]
         from datetime import datetime
 
         # Generate datetime string for the README
@@ -84,11 +87,11 @@ class TestEBCC:
             nest.CopyModel(
                 self.net_config["cell_types"][cell_name]["neuron_model"], cell_name
             )
-            self.neuronal_populations[cell_name]["cell_ids"] = nest.Create(
-                cell_name, self.neuronal_populations[cell_name]["numerosity"]
-            )
             nest.SetDefaults(
                 cell_name, self.net_config["cell_types"][cell_name]["parameters"]
+            )
+            self.neuronal_populations[cell_name]["cell_ids"] = nest.Create(
+                cell_name, self.neuronal_populations[cell_name]["numerosity"]
             )
 
     def create_vt(self, vt_modality) -> None:
@@ -441,10 +444,6 @@ class TestEBCC:
         )
         CS_f_rate = self.net_config["devices"]["CS"]["parameters"]["rate"]
         CS_n_spikes = int(CS_f_rate * CS_burst_dur / 1000)
-        self.between_start = self.net_config["devices"]["CS"]["parameters"][
-            "between_start"
-        ]
-        self.n_trials = self.net_config["devices"]["CS"]["parameters"]["n_trials"]
         n_CS_device = len(self.id_map_mf)
         t0 = CS_start_first
         t1 = CS_start_first + (CS_burst_dur / 2) - (n_CS_device / 2)
@@ -645,10 +644,10 @@ if __name__ == "__main__":
     from move_files import move_files_to_folder
 
     data_path = "./data/"
-    simulation_description = "1_vt_PC_plastic_syn"
+    simulation_description = "no connections: weight to 0"
     vt_modality = "1_vt_PC"
     connect_vt_to_io = True
-    plastic_pf_PC = True
+    plastic_pf_PC = False
     print(vt_modality)
     simulation = TestEBCC(
         data_path=data_path, simulation_description=simulation_description
@@ -667,10 +666,10 @@ if __name__ == "__main__":
             vt_modality=vt_modality, connect_vt_to_io=connect_vt_to_io
         )
 
-    simulation.stimulus_geometry(plot=False)
-    simulation.define_CS_stimuli()
-    simulation.define_US_stimuli()
-    simulation.define_bg_noise()
+    # simulation.stimulus_geometry(plot=False)
+    # simulation.define_CS_stimuli()
+    # simulation.define_US_stimuli()
+    # simulation.define_bg_noise()
     simulation.define_recorders()
     simulation.simulate_network()
 
