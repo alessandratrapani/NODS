@@ -378,7 +378,7 @@
         "golgi_to_granule": {
             "pre": "golgi_cell",
             "post": "granule_cell",
-            "weight": -0.2414254875363826,
+            "weight": 0.2414254875363826,
             "delay": 2.0,
             "synapse": {
                 "static_synapse": {}
@@ -396,7 +396,7 @@
         "golgi_to_golgi": {
             "pre": "golgi_cell",
             "post": "golgi_cell",
-            "weight": -0.006963972896209415,
+            "weight": 0.006963972896209415,
             "delay": 4.0,
             "synapse": {
                 "static_synapse": {}
@@ -449,7 +449,7 @@
         "stellate_to_purkinje": {
             "pre": "stellate_cell",
             "post": "purkinje_cell",
-            "weight": -1.6417305424528301,
+            "weight": 1.6417305424528301,
             "delay": 5.0,
             "synapse": {
                 "static_synapse": {}
@@ -458,7 +458,7 @@
         "basket_to_purkinje": {
             "pre": "basket_cell",
             "post": "purkinje_cell",
-            "weight": -0.43571216199298946,
+            "weight": 0.43571216199298946,
             "delay": 4.0,
             "synapse": {
                 "static_synapse": {}
@@ -467,7 +467,7 @@
         "stellate_to_stellate": {
             "pre": "stellate_cell",
             "post": "stellate_cell",
-            "weight": -0.004632136716544654,
+            "weight": 0.004632136716544654,
             "delay": 4.0,
             "synapse": {
                 "static_synapse": {}
@@ -476,7 +476,7 @@
         "basket_to_basket": {
             "pre": "basket_cell",
             "post": "basket_cell",
-            "weight": -0.005782745745029148,
+            "weight": 0.005782745745029148,
             "delay": 4.0,
             "synapse": {
                 "static_synapse": {}
@@ -526,7 +526,7 @@
                 "glomerulus"
             ],
             "parameters": {
-                "rate": 0.0,
+                "rate": 4.0,
                 "start": 0.0,
                 "stop": 50500.0
             }

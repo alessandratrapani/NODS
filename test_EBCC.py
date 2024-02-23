@@ -109,7 +109,7 @@ class TestEBCC:
         else:
             return
 
-    def connect_network_all_static_syn(self, vt_modality, connect_vt_to_io) -> None:
+    def connect_network_all_static_syn(self) -> None:
         connection_models = list(self.net_config["connection_models"].keys())
 
         for conn_model in connection_models:
@@ -446,35 +446,40 @@ class TestEBCC:
         CS_n_spikes = int(CS_f_rate * CS_burst_dur / 1000)
         n_CS_device = len(self.id_map_mf)
         t0 = CS_start_first
-        t1 = CS_start_first + (CS_burst_dur / 2) - (n_CS_device / 2)
-        t2 = CS_start_first + (CS_burst_dur / 2)
-        t3 = CS_start_first + CS_burst_dur - (n_CS_device / 2)
-        CS_matrix_start_pre = np.round((np.linspace(t0, t1, CS_n_spikes)))
-        CS_matrix_start_post = np.round((np.linspace(t2, t3, CS_n_spikes)))
-        CS_matrix_first_pre = np.concatenate(
-            [CS_matrix_start_pre + self.between_start * t for t in range(self.n_trials)]
-        )
-        CS_matrix_first_post = np.concatenate(
-            [
-                CS_matrix_start_post + self.between_start * t
-                for t in range(self.n_trials)
-            ]
-        )
+        # t1 = CS_start_first + (CS_burst_dur / 2) - (n_CS_device / 2)
+        # t2 = CS_start_first + (CS_burst_dur / 2)
+        # t3 = CS_start_first + CS_burst_dur - (n_CS_device / 2)
+        # CS_matrix_start_pre = np.round((np.linspace(t0, t1, CS_n_spikes)))
+        # CS_matrix_start_post = np.round((np.linspace(t2, t3, CS_n_spikes)))
+        # CS_matrix_first_pre = np.concatenate(
+        #     [CS_matrix_start_pre + self.between_start * t for t in range(self.n_trials)]
+        # )
+        # CS_matrix_first_post = np.concatenate(
+        #     [
+        #         CS_matrix_start_post + self.between_start * t
+        #         for t in range(self.n_trials)
+        #     ]
+        # )
 
-        CS_device = nest.Create(self.net_config["devices"]["CS"]["device"], n_CS_device)
+        # CS_device = nest.Create(self.net_config["devices"]["CS"]["device"], n_CS_device)
 
-        CS_matrix = []
-        for i in range(int(n_CS_device / 2)):
-            CS_matrix.append(CS_matrix_first_pre + i)
-            CS_matrix.append(CS_matrix_first_post + i)
+        # CS_matrix = []
+        # for i in range(int(n_CS_device / 2)):
+        #     CS_matrix.append(CS_matrix_first_pre + i)
+        #     CS_matrix.append(CS_matrix_first_post + i)
 
-        for sg in range(len(CS_device) - 1):
+        tf = CS_start_first + CS_burst_dur
+        
+        CS_device = nest.Create(self.net_config["devices"]["CS"]["device"], n_CS_device)        
+        for sg in range(n_CS_device - 1):
+            random_spikes = np.random.uniform(low=t0, high=tf, size=CS_n_spikes)
+            CS_matrix_start = np.round(np.sort(random_spikes))
+            CS_matrix = np.concatenate([CS_matrix_start + self.between_start * t for t in range(self.n_trials)])
             nest.SetStatus(
-                CS_device[sg : sg + 1], params={"spike_times": CS_matrix[sg].tolist()}
+                CS_device[sg : sg + 1], params={"spike_times": CS_matrix.tolist()}
             )
 
-        mf_ids = random.sample(list(self.id_map_mf), len(CS_device))
-        nest.Connect(CS_device, mf_ids, "one_to_one")
+        nest.Connect(CS_device, self.id_map_mf.tolist(), "one_to_one")
 
     def define_US_stimuli(self) -> None:
         print("US stimulus")
@@ -641,13 +646,12 @@ class TestEBCC:
 
 
 if __name__ == "__main__":
-    from move_files import move_files_to_folder
 
     data_path = "./data/"
-    simulation_description = "no connections: weight to 0"
+    simulation_description = "all stimuli no plasticity"
     vt_modality = "1_vt_PC"
     connect_vt_to_io = True
-    plastic_pf_PC = False
+    plastic_pf_PC = True
     print(vt_modality)
     simulation = TestEBCC(
         data_path=data_path, simulation_description=simulation_description
@@ -662,21 +666,19 @@ if __name__ == "__main__":
     if plastic_pf_PC:
         simulation.connect_network_plastic_syn(vt_modality=vt_modality)
     else:
-        simulation.connect_network_all_static_syn(
-            vt_modality=vt_modality, connect_vt_to_io=connect_vt_to_io
-        )
+        simulation.connect_network_all_static_syn()
 
-    # simulation.stimulus_geometry(plot=False)
-    # simulation.define_CS_stimuli()
-    # simulation.define_US_stimuli()
-    # simulation.define_bg_noise()
+    simulation.stimulus_geometry(plot=False)
+    simulation.define_CS_stimuli()
+    simulation.define_US_stimuli()
+    simulation.define_bg_noise()
     simulation.define_recorders()
     simulation.simulate_network()
 
-    cell = "pc_spikes"
     step = 5
-    simulation.plot_cell_activity_over_trials(cell=cell, step=step)
-    simulation.plot_cell_raster(cell=cell)
+    for cell in ["pc_spikes","stellate_spikes","granule_spikes"]:
+        simulation.plot_cell_activity_over_trials(cell=cell, step=step)
+        simulation.plot_cell_raster(cell=cell)
 
     source_folder = "./"
     destination_folder = "./results"
@@ -691,5 +693,5 @@ if __name__ == "__main__":
         "pf-PC",
         "aa_",
     ]
-
+    from move_files import move_files_to_folder
     move_files_to_folder(source_folder, destination_folder, file_prefixes)
