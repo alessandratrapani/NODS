@@ -30,10 +30,10 @@ class NODS:
 
     def init_geometry(self, nNOS_coordinates, ev_point_coordinates, source_ids, nos_ids = None, cluster_nos_ids=None, ev_point_ids = None, cluster_ev_point_ids=None, file_ev_points = None, file_nNOS = None):
 
-        if not file_ev_points:
-            if not ev_point_ids:
+        if file_ev_points is None:
+            if ev_point_ids is None:
                 ev_point_ids = np.arange(len(ev_point_coordinates))
-            if not cluster_ev_point_ids:
+            if cluster_ev_point_ids is None:
                 self.cluster_ev_point_ids = -1*np.ones((len(ev_point_coordinates)))
             else:
                 self.cluster_ev_point_ids = cluster_ev_point_ids
@@ -47,10 +47,10 @@ class NODS:
             #self.ev_points.sort_values(by='evpoint_id')
         #TODO else: load da file
 
-        if not file_nNOS:
-            if not nos_ids:
+        if file_nNOS is None:
+            if nos_ids is None:
                 nos_ids = np.arange(len(nNOS_coordinates))
-            if not cluster_nos_ids:
+            if cluster_nos_ids is None:
                 self.cluster_nos_ids = -1*np.ones((len(nNOS_coordinates)))
             else:
                 self.cluster_nos_ids = cluster_nos_ids
