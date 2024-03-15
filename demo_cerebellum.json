@@ -526,7 +526,7 @@
                 "glomerulus"
             ],
             "parameters": {
-                "rate": 0.0,
+                "rate": 4.0,
                 "start": 0.0,
                 "stop": 50500.0
             }
@@ -543,7 +543,7 @@
                 "burst_dur": 280,
                 "rate": 40.0,
                 "between_start": 500,
-                "n_trials": 31
+                "n_trials": 16
             },
             "connection": {
                 "rule": "one_to_one"
@@ -562,7 +562,7 @@
                 "burst_dur": 30,
                 "rate": 500.0,
                 "between_start": 500,
-                "n_trials": 30
+                "n_trials": 15
             },
             "connection": {
                 "rule": "all_to_all"
