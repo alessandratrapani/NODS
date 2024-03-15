@@ -373,7 +373,7 @@
             "parameters": {
                 "rate": 0.0,
                 "start": 0.0,
-                "stop": 50500.0
+                "stop": 15000.0
             }
         },
         "CS": {
@@ -388,7 +388,7 @@
                 "burst_dur": 280,
                 "rate": 40,
                 "between_start": 500,
-                "n_trials": 11
+                "n_trials": 30
             },
             "connection": {
                 "rule": "one_to_one"
@@ -407,7 +407,7 @@
                 "burst_dur": 30,
                 "rate": 500,
                 "between_start": 500,
-                "n_trials": 10
+                "n_trials": 29
             },
             "conn_spec": {
                 "rule": "all_to_all"
