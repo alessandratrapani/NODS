@@ -377,7 +377,30 @@ for device_name in devices:
         )
 
 # %%-------------------------------------------INITIALIZE NODS---------------------
-
+"""Initialize NODS"""
+if NO_dependency:
+    t0 = time.time()
+    init_new_sim = True
+    simulation_file = "NO_simulation"
+    sim = NODS(params)
+    if init_new_sim:
+        sim.init_geometry(
+            nNOS_coordinates=nNOS_coordinates,
+            ev_point_coordinates=ev_point_coordinates,
+            source_ids=source_ids,
+            ev_point_ids=ev_point_ids,
+            nos_ids=nos_ids,
+            cluster_ev_point_ids=cluster_ev_point_ids,
+            cluster_nos_ids=cluster_nos_ids,
+        )
+    else:
+        sim = sim.load_simulation(simulation_file=simulation_file)
+    sim.time = sim_time_steps
+    sim.init_simulation(
+        simulation_file, store_sim=True
+    )  # If you want to save sim inizialization change store_sim=True
+    t = time.time() - t0
+    print("time {}".format(t))
 # %%-------------------------------------------SIMULATE NETWORK---------------------
 # Simulate Network
 print("simulate")
@@ -447,26 +470,3 @@ readme_content = f"""# Simulation Parameters
 # Write the README content to a file
 with open('./sim_description.md', "w") as readme_file:
     readme_file.write(readme_content)
-# %%-------------------------------------------PLOT NETWORK ACTIVITY--------------TODO improve plots
-#'''
-devices = list(net_config["devices"].keys())
-for device_name in devices:
-    if "record" in device_name:
-        cell_name = net_config["devices"][device_name]["cell_types"]
-        file = net_config["devices"][device_name]["parameters"]["label"]
-        try:
-            plot_cell_activity(
-                trial_len=between_start,
-                n_trial=1,
-                delta_t=2,
-                cell_number=net_config["cell_types"][cell_name]["numerosity"],
-                cell_name=file,
-                freq_plot=True,
-                png=False,
-                scatter=True,
-                png_scatter=False,
-                dir="./results/all_vt/",
-            )
-            plt.show()
-        except:
-            pass

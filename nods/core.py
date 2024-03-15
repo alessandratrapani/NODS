@@ -30,44 +30,42 @@ class NODS:
 
     def init_geometry(self, nNOS_coordinates, ev_point_coordinates, source_ids, nos_ids = None, cluster_nos_ids=None, ev_point_ids = None, cluster_ev_point_ids=None, file_ev_points = None, file_nNOS = None):
 
-        if not file_ev_points:
-            if not ev_point_ids:
+        if file_ev_points is None:
+            if ev_point_ids is None:
                 ev_point_ids = np.arange(len(ev_point_coordinates))
-            if not cluster_ev_point_ids:
-                self.cluster_ev_point_ids = -1*np.ones((len(ev_point_coordinates)))
-            else:
-                self.cluster_ev_point_ids = cluster_ev_point_ids
+            if cluster_ev_point_ids is None:
+                cluster_ev_point_ids = -1*np.ones((len(ev_point_coordinates)))
 
-            self.ev_points = {}    
+            ev_points = {}    
             for index,ev_point_id in enumerate(ev_point_ids):
-                self.ev_points[ev_point_id] = dict(x =  ev_point_coordinates[index,0],
+                ev_points[ev_point_id] = dict(x =  ev_point_coordinates[index,0],
                                                    y =  ev_point_coordinates[index,1],
                                                    z =  ev_point_coordinates[index,2],
-                                                   cluster = self.cluster_ev_point_ids[index])
-            #self.ev_points.sort_values(by='evpoint_id')
+                                                   cluster = cluster_ev_point_ids[index])
+            #ev_points.sort_values(by='evpoint_id')
         #TODO else: load da file
 
-        if not file_nNOS:
-            if not nos_ids:
+        if file_nNOS is None:
+            if nos_ids is None:
                 nos_ids = np.arange(len(nNOS_coordinates))
-            if not cluster_nos_ids:
+            if cluster_nos_ids is None:
                 self.cluster_nos_ids = -1*np.ones((len(nNOS_coordinates)))
             else:
                 self.cluster_nos_ids = cluster_nos_ids
 
-            self.all_nNOS = {}
+            all_nNOS = {}
             for index,nos_id in enumerate(nos_ids):
-                self.all_nNOS[nos_id] = dict(source_id = source_ids[index],
+                all_nNOS[nos_id] = dict(source_id = source_ids[index],
                                             x =  nNOS_coordinates[index,0],
                                             y =  nNOS_coordinates[index,1],
                                             z =  nNOS_coordinates[index,2],
                                             cluster = self.cluster_nos_ids[index])                    
-            #self.all_nNOS = pd.DataFrame({'source_id':source_ids, 'nos_id':nos_ids, 'x': nNOS_coordinates[:,0], 'y': nNOS_coordinates[:,1], 'z': nNOS_coordinates[:,2]})
+            #all_nNOS = pd.DataFrame({'source_id':source_ids, 'nos_id':nos_ids, 'x': nNOS_coordinates[:,0], 'y': nNOS_coordinates[:,1], 'z': nNOS_coordinates[:,2]})
         #TODO else: load da file
-        self.sort_sources()
+        self.sort_sources(all_nNOS, ev_points)
         return
 
-    def sort_sources(self, filename = None):
+    def sort_sources(self, all_nNOS, ev_points, filename = None):
         """function to filter the sources of nNOS activation to be avaluated"""
         self.relative_dist = []
         self.source_to_eval = []
@@ -75,19 +73,19 @@ class NODS:
         # loop on cluster DA PARALLELIZZARE
         for cluster in cluster_ids:
             # loop on the receiver
-            for evpoint_id in self.ev_points:
+            for evpoint_id in ev_points:
                 # loop on the sources
-                if self.ev_points[evpoint_id]['cluster']==cluster:
-                    ev_point_coordinates = np.array([self.ev_points[evpoint_id]['x'],self.ev_points[evpoint_id]['y'],self.ev_points[evpoint_id]['z']])
-                    for nos_id in self.all_nNOS: 
-                        if self.all_nNOS[nos_id]['cluster']==cluster:
-                            nNOS_coordinates = np.array([self.all_nNOS[nos_id]['x'],self.all_nNOS[nos_id]['y'],self.all_nNOS[nos_id]['z']])                    
+                if ev_points[evpoint_id]['cluster']==cluster:
+                    ev_point_coordinates = np.array([ev_points[evpoint_id]['x'],ev_points[evpoint_id]['y'],ev_points[evpoint_id]['z']])
+                    for nos_id in all_nNOS: 
+                        if all_nNOS[nos_id]['cluster']==cluster:
+                            nNOS_coordinates = np.array([all_nNOS[nos_id]['x'],all_nNOS[nos_id]['y'],all_nNOS[nos_id]['z']])                    
                             # distance evaluation
                             d = spatial.distance.euclidean(nNOS_coordinates, ev_point_coordinates)
                             # check on relevant distance value
                             if d < self.r_max:
                                 # lists update
-                                source_id = self.all_nNOS[nos_id]['source_id']
+                                source_id = all_nNOS[nos_id]['source_id']
                                 self.source_to_eval.append(source_id)
                                 self.relative_dist.append([np.int(source_id), np.int(nos_id), np.int(evpoint_id), d, np.int(cluster)]) # 0: id_source, 1: id_nos, 2:id_evpoint, 3: relative_distance
         # elimination repetition of same source
@@ -95,19 +93,18 @@ class NODS:
 
         return
     
-    def init_simulation(self,simulation_file, store_sim=True):
+    def init_simulation(self,simulation_file, number_of_evaluation_points, store_sim=True):
 
         self.NO_from_source = {}
         for source_id in self.source_to_eval:
             self.NO_from_source[source_id] = dict(  Calm2C = self.Calm2C_0 ,
                                                     nNOS   = self.nNOS_0,
                                                     NO_produced_t0  = self.NO_p_0,
-                                                    NO_diffused     = np.zeros((len(self.distances), len(self.time))),
                                                     u               = np.zeros_like(self.distances).astype(np.float64),
                                                     NO_diffused_tf  = 0
                                                 )
             
-        self.NO_in_ev_points = np.zeros((len(self.time),len(self.ev_points)))
+        self.NO_in_ev_points = np.zeros((number_of_evaluation_points))
         
         if store_sim:
             dill.dump(self, open(simulation_file, "wb"))
@@ -136,7 +133,6 @@ class NODS:
             self.NO_from_source[source_id]['NO_produced_t0'] = NO_produced_t1
             self.NO_from_source[source_id]['u'] = u
             self.NO_from_source[source_id]['NO_diffused_tf'] = NO
-            self.NO_from_source[source_id]['NO_diffused'][:,t] = NO
 
         for row in self.relative_dist:# 0:id_source, 1:id_nos, 2:id_evpoint, 3:relative_distance
             d = row[3]
@@ -144,7 +140,7 @@ class NODS:
             if d < 0.2: #TODO renderlo settabile fuori come limite
                 d = 0.2 # position of nNOS wrt center of the point source            
             # sum the contribution of each source 
-            self.NO_in_ev_points[t, row[2]] += self.NO_from_source[row[0]]['NO_diffused_tf'][round((d+self.r_max)/self.ds)]                                
+            self.NO_in_ev_points[row[2]] += self.NO_from_source[row[0]]['NO_diffused_tf'][round((d+self.r_max)/self.ds)]                                
         return
 
 def Production_function(dt,Ca_spike,Calm2C_old,nNOS_old,tauCa,tauNOS1,tauNOS2,A):

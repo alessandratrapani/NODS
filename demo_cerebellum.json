@@ -492,8 +492,8 @@
             "weight": 0.4,
             "delay": 5.0,
             "parameters": {
-                "A_minus": -0.009,
-                "A_plus": 0.000225,
+                "A_minus": -0.0005,
+                "A_plus": 0.0000225,
                 "Wmin": 0.0,
                 "Wmax": 2.0
             }
@@ -543,7 +543,7 @@
                 "burst_dur": 280,
                 "rate": 40.0,
                 "between_start": 500,
-                "n_trials": 6
+                "n_trials": 16
             },
             "connection": {
                 "rule": "one_to_one"
@@ -562,7 +562,7 @@
                 "burst_dur": 30,
                 "rate": 500.0,
                 "between_start": 500,
-                "n_trials": 5
+                "n_trials": 15
             },
             "connection": {
                 "rule": "all_to_all"

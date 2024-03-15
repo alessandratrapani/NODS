@@ -3,16 +3,21 @@ import json
 import os
 import dill
 import time
-from nods.utils import *
-from nods.plot import plot_cell_activity
 import nest
 import random
+from nods.core import NODS
+from nods.utils import *
+import pickle
 
 
 class TestEBCC:
     def __init__(self, data_path="./data/", simulation_description="") -> None:
         self.data_path = data_path
         self.simulation_description = simulation_description
+        params_filename = "model_parameters.json"
+        root_path = "./nods/"
+        with open(os.path.join(root_path, params_filename), "r") as read_file:
+            self.params = json.load(read_file)
         pass
 
     def set_network_configuration(self, vt_modality, connect_vt_to_io) -> None:
@@ -216,7 +221,7 @@ class TestEBCC:
                         self.neuronal_populations["purkinje_cell"]["cell_ids"]
                     ):
                         syn_param["vt_num"] = float(n)
-                        syn_param["meta_l"] = 1.0
+                        syn_param["meta_l"] = 0.0
                         indexes = np.where(ids_PC_post == id_PC)[0]
                         pre_neurons = np.array(ids_GrC_pre)[indexes]
                         post_neurons = np.array(ids_PC_post)[indexes]
@@ -283,7 +288,7 @@ class TestEBCC:
                             "receptors"
                         ]["granule_cell"],
                         "vt_num": np.arange(self.num_syn),
-                        "meta_l": np.ones((self.num_syn)),
+                        "meta_l": np.zeros((self.num_syn)),
                     }
 
                     granule_ids = self.connectivity[conn_model]["id_pre"]
@@ -294,7 +299,16 @@ class TestEBCC:
                         {"rule": "one_to_one"},
                         syn_param,
                     )
-
+                    # t0 = time.time()
+                    # print("save pf-Pc connections")
+                    # pfs = nest.GetConnections(
+                    #     self.neuronal_populations["granule_cell"]["cell_ids"],
+                    #     self.neuronal_populations["purkinje_cell"]["cell_ids"],
+                    # )
+                    # with open('pfs-PC.pkl', 'wb') as file:
+                    #     pickle.dump(pfs, file)
+                    # t = time.time() - t0
+                    # print("Time to get the pf-Pc connections: ", t)
                     # Connect io and vt
                     syn_param = {
                         "model": "static_synapse",
@@ -304,9 +318,10 @@ class TestEBCC:
                     io_ids = self.connectivity["io_to_vt"]["id_pre"]
                     vt_ids = self.connectivity["io_to_vt"]["id_post"]
                     nest.Connect(io_ids, vt_ids, {"rule": "one_to_one"}, syn_param)
-
+                    
                 else:
                     print("vt_modality must be either <1_vt_PC> or <1_vt_pf-PC>")
+
             elif conn_model == "mossy_to_glomerulus":
                 syn_param = {
                     "model": "static_synapse",
@@ -446,35 +461,17 @@ class TestEBCC:
         CS_n_spikes = int(CS_f_rate * CS_burst_dur / 1000)
         n_CS_device = len(self.id_map_mf)
         t0 = CS_start_first
-        # t1 = CS_start_first + (CS_burst_dur / 2) - (n_CS_device / 2)
-        # t2 = CS_start_first + (CS_burst_dur / 2)
-        # t3 = CS_start_first + CS_burst_dur - (n_CS_device / 2)
-        # CS_matrix_start_pre = np.round((np.linspace(t0, t1, CS_n_spikes)))
-        # CS_matrix_start_post = np.round((np.linspace(t2, t3, CS_n_spikes)))
-        # CS_matrix_first_pre = np.concatenate(
-        #     [CS_matrix_start_pre + self.between_start * t for t in range(self.n_trials)]
-        # )
-        # CS_matrix_first_post = np.concatenate(
-        #     [
-        #         CS_matrix_start_post + self.between_start * t
-        #         for t in range(self.n_trials)
-        #     ]
-        # )
-
-        # CS_device = nest.Create(self.net_config["devices"]["CS"]["device"], n_CS_device)
-
-        # CS_matrix = []
-        # for i in range(int(n_CS_device / 2)):
-        #     CS_matrix.append(CS_matrix_first_pre + i)
-        #     CS_matrix.append(CS_matrix_first_post + i)
 
         tf = CS_start_first + CS_burst_dur
-        
-        CS_device = nest.Create(self.net_config["devices"]["CS"]["device"], n_CS_device)        
+
+        CS_device = nest.Create(self.net_config["devices"]["CS"]["device"], n_CS_device)
+        np.random.seed(42)
         for sg in range(n_CS_device - 1):
             random_spikes = np.random.uniform(low=t0, high=tf, size=CS_n_spikes)
             CS_matrix_start = np.round(np.sort(random_spikes))
-            CS_matrix = np.concatenate([CS_matrix_start + self.between_start * t for t in range(self.n_trials)])
+            CS_matrix = np.concatenate(
+                [CS_matrix_start + self.between_start * t for t in range(self.n_trials)]
+            )
             nest.SetStatus(
                 CS_device[sg : sg + 1], params={"spike_times": CS_matrix.tolist()}
             )
@@ -547,6 +544,67 @@ class TestEBCC:
                     self.neuronal_populations[cell_name]["cell_ids"],
                     spikedetectors[cell_name],
                 )
+        self.spikedetector_granule_cell = spikedetectors["granule_cell"]
+
+    def NO_sources_geometry(self):
+        print("nNOS placement")
+        pc_soma = 20.0
+        nNOS_coordinates = np.zeros((len(self.vt), 3))
+        i = 0
+        for grc_id, pc_id in zip(
+            self.connectivity["parallel_fiber_to_purkinje"]["id_pre"],
+            self.connectivity["parallel_fiber_to_purkinje"]["id_post"],
+        ):
+            nNOS_x = self.neuronal_populations["granule_cell"]["cell_pos"][
+                self.neuronal_populations["granule_cell"]["cell_ids"] == grc_id
+            ][0][0]
+            nNOS_y = self.neuronal_populations["purkinje_cell"]["cell_pos"][
+                self.neuronal_populations["purkinje_cell"]["cell_ids"] == pc_id
+            ][0][2]
+            y_ml = 150
+            proportion = (
+                self.neuronal_populations["granule_cell"]["cell_pos"][
+                    self.neuronal_populations["granule_cell"]["cell_ids"] == grc_id
+                ][0][2]
+                / y_ml
+            ) * y_ml
+            nNOS_z = (
+                pc_soma
+                + proportion
+                + self.neuronal_populations["purkinje_cell"]["cell_pos"][
+                    self.neuronal_populations["purkinje_cell"]["cell_ids"] == pc_id
+                ][0][1]
+            )
+            nNOS_coordinates[i, 0] = nNOS_x
+            nNOS_coordinates[i, 1] = nNOS_y
+            nNOS_coordinates[i, 2] = nNOS_z
+            i += 1
+        return nNOS_coordinates
+
+    def initialize_nods(self):
+        t0 = time.time()
+        simulation_file = "NO_simulation.p"
+        nods_sim = NODS(self.params)
+
+        nNOS_coordinates = self.NO_sources_geometry()
+        print("Initialize nods")
+        nods_sim.init_geometry(
+            nNOS_coordinates=nNOS_coordinates,
+            ev_point_coordinates=nNOS_coordinates,
+            source_ids=self.connectivity["parallel_fiber_to_purkinje"]["id_pre"],
+            nos_ids=self.vt,
+            cluster_ev_point_ids=self.connectivity["parallel_fiber_to_purkinje"][
+                "id_post"
+            ],
+            cluster_nos_ids=self.connectivity["parallel_fiber_to_purkinje"]["id_post"],
+        )
+        nods_sim.time = np.arange(0, self.between_start * self.n_trials, 1.0)
+        nods_sim.init_simulation(
+            simulation_file, store_sim=False, number_of_evaluation_points=len(self.vt)
+        )  # If you want to save sim inizialization change store_sim=True
+        t = time.time() - t0
+        print("time {}".format(t))
+        return nods_sim
 
     def simulate_network(self) -> None:
         print("simulate")
@@ -557,6 +615,29 @@ class TestEBCC:
             nest.Simulate(self.between_start)
             t = time.time() - t0
             print("Time: ", t)
+
+    def simulate_network_with_NO(self, nods_sim) -> None:
+        print("simulate with NO")
+        print("Single trial length: ", self.between_start)
+        with open('pfs-PC.pkl', 'rb') as file:
+            pfs = pickle.load(file)
+        processed = 0
+
+        for t in range(self.n_trials * self.between_start):
+            nest.Simulate(1.0)
+            time.sleep(0.01)
+            ID_cell = nest.GetStatus(self.spikedetector_granule_cell, "events")[0][
+                "senders"
+            ]
+            active_sources = ID_cell[processed:]
+            processed += len(active_sources)
+            nods_sim.evaluate_diffusion(active_sources, t)
+            list_dict = []
+            for i in range(len(pfs)):
+                list_dict.append(
+                    {"meta_l": float(sig(x=nods_sim.NO_in_ev_points[i], A=1, B=130))}
+                )
+            nest.SetStatus(pfs, list_dict)
 
     def plot_cell_activity_over_trials(self, cell, step):
         import matplotlib.pyplot as plt
@@ -648,8 +729,8 @@ class TestEBCC:
 if __name__ == "__main__":
 
     data_path = "./data/"
-    simulation_description = "all stimuli no plasticity"
-    vt_modality = "1_vt_PC"
+    simulation_description = "complete EBCC with NO"
+    vt_modality = "1_vt_pf-PC"
     connect_vt_to_io = True
     plastic_pf_PC = True
     print(vt_modality)
@@ -673,10 +754,12 @@ if __name__ == "__main__":
     simulation.define_US_stimuli()
     simulation.define_bg_noise()
     simulation.define_recorders()
-    simulation.simulate_network()
+    #simulation.simulate_network()
+    nods_sim = simulation.initialize_nods()
+    simulation.simulate_network_with_NO(nods_sim) 
 
     step = 5
-    for cell in ["pc_spikes","stellate_spikes","granule_spikes"]:
+    for cell in ["pc_spikes", "stellate_spikes", "granule_spikes"]:
         simulation.plot_cell_activity_over_trials(cell=cell, step=step)
         simulation.plot_cell_raster(cell=cell)
 
@@ -694,4 +777,5 @@ if __name__ == "__main__":
         "aa_",
     ]
     from move_files import move_files_to_folder
+
     move_files_to_folder(source_folder, destination_folder, file_prefixes)
