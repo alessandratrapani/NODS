@@ -221,7 +221,7 @@ class TestEBCC:
                         self.neuronal_populations["purkinje_cell"]["cell_ids"]
                     ):
                         syn_param["vt_num"] = float(n)
-                        syn_param["meta_l"] = 0.0
+                        syn_param["meta_l"] = 1.0
                         indexes = np.where(ids_PC_post == id_PC)[0]
                         pre_neurons = np.array(ids_GrC_pre)[indexes]
                         post_neurons = np.array(ids_PC_post)[indexes]
@@ -730,7 +730,7 @@ if __name__ == "__main__":
 
     data_path = "./data/"
     simulation_description = "complete EBCC with NO"
-    vt_modality = "1_vt_pf-PC" # 1_vt_PC
+    vt_modality = "1_vt_PC" # 1_vt_PC
     connect_vt_to_io = True
     plastic_pf_PC = True
     print(vt_modality)
@@ -754,10 +754,9 @@ if __name__ == "__main__":
     simulation.define_US_stimuli()
     simulation.define_bg_noise()
     simulation.define_recorders()
-    #simulation.simulate_network()
+    simulation.simulate_network()
     # nods_sim = simulation.initialize_nods()
-    nods_sim=1
-    simulation.simulate_network_with_NO(nods_sim) 
+    # simulation.simulate_network_with_NO(nods_sim) 
 
     step = 5
     for cell in ["pc_spikes", "stellate_spikes", "granule_spikes"]:

@@ -148,7 +148,7 @@ class SimulateEBCC:
                         self.neuronal_populations["purkinje_cell"]["cell_ids"]
                     ):
                         syn_param["vt_num"] = float(n)
-                        syn_param["meta_l"] = 0.0
+                        syn_param["meta_l"] = 1.0
                         indexes = np.where(ids_PC_post == id_PC)[0]
                         pre_neurons = np.array(ids_GrC_pre)[indexes]
                         post_neurons = np.array(ids_PC_post)[indexes]
