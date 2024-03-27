@@ -2,7 +2,7 @@ from simulateEBCC import SimulateEBCC
 import os
 data_path = "./data/"
 condition = "without NO"
-noise_rate =  0.0
+A_minus =   -0.0005 + (-0.0005*0.05)
 source_folder = "./"
 destination_folder = "./results"
 file_prefixes = [
@@ -17,7 +17,7 @@ file_prefixes = [
     "aa_",
 ]
 
-simulation_description = f"Only background noise at {noise_rate}, {condition}"
+simulation_description = f"EBCC with A_minus = {A_minus}, {condition}"
 print(simulation_description)
 
 destination_folder = os.path.join(destination_folder, condition.replace(" ",""))
@@ -31,11 +31,11 @@ if condition == "with NO":
     simulation.set_nest_kernel()
     simulation.create_network()
     simulation.create_vt(vt_modality=vt_modality)
-    simulation.connect_network_plastic_syn(vt_modality=vt_modality)
+    simulation.connect_network_plastic_syn(vt_modality=vt_modality,A_minus=A_minus)
     simulation.stimulus_geometry(plot=False)
-    #simulation.define_CS_stimuli()
-    #simulation.define_US_stimuli()
-    simulation.define_bg_noise(rate=noise_rate)
+    simulation.define_CS_stimuli()
+    simulation.define_US_stimuli()
+    simulation.define_bg_noise()
     simulation.define_recorders()
     nods_sim = simulation.initialize_nods()
     simulation.simulate_network_with_NO(nods_sim)
@@ -48,11 +48,11 @@ if condition == "without NO":
     simulation.set_nest_kernel()
     simulation.create_network()
     simulation.create_vt(vt_modality=vt_modality)
-    simulation.connect_network_plastic_syn(vt_modality=vt_modality)
+    simulation.connect_network_plastic_syn(vt_modality=vt_modality,A_minus=A_minus)
     simulation.stimulus_geometry(plot=False)
     simulation.define_CS_stimuli()
     simulation.define_US_stimuli()
-    simulation.define_bg_noise(rate=noise_rate)
+    simulation.define_bg_noise()
     simulation.define_recorders()
     simulation.simulate_network()
 
@@ -72,7 +72,7 @@ readme_content = f"""# Simulation Parameters
                 - n_trials: {simulation.net_config["devices"]["CS"]["parameters"]["n_trials"]}
                 - CS_rate: {simulation.net_config["devices"]["CS"]["parameters"]["rate"]}
                 - US_rate: {simulation.net_config["devices"]["US"]["parameters"]["rate"]}
-                - noise_rate:{noise_rate}
+                - noise_rate:{simulation.net_config["devices"]["background_noise"]["parameters"]["rate"]}
                 - A_minus: {simulation.net_config["connection_models"]["parallel_fiber_to_purkinje"]["parameters"]["A_minus"]}
                 - A_plus: {simulation.net_config["connection_models"]["parallel_fiber_to_purkinje"]["parameters"]["A_plus"]}
                 - Wmin: {simulation.net_config["connection_models"]["parallel_fiber_to_purkinje"]["parameters"]["Wmin"]}
