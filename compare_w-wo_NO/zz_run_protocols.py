@@ -1,8 +1,14 @@
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from simulateEBCC import SimulateEBCC
 import os
+
 data_path = "./data/"
-condition = "without NO"
-A_minus =   -0.0005 + (-0.0005*0.05)
+condition = "with NO"
+A_minus =   -0.0005
+variation = 0.1
+A_minus_w_variation =   A_minus + (A_minus*variation)
 source_folder = "./"
 destination_folder = "./results"
 file_prefixes = [
@@ -17,7 +23,7 @@ file_prefixes = [
     "aa_",
 ]
 
-simulation_description = f"EBCC with A_minus = {A_minus}, {condition}"
+simulation_description = f"EBCC with A_minus = {A_minus} + {variation}% {A_minus}, {condition}"
 print(simulation_description)
 
 destination_folder = os.path.join(destination_folder, condition.replace(" ",""))
@@ -31,7 +37,7 @@ if condition == "with NO":
     simulation.set_nest_kernel()
     simulation.create_network()
     simulation.create_vt(vt_modality=vt_modality)
-    simulation.connect_network_plastic_syn(vt_modality=vt_modality,A_minus=A_minus)
+    simulation.connect_network_plastic_syn(vt_modality=vt_modality,A_minus=A_minus_w_variation)
     simulation.stimulus_geometry(plot=False)
     simulation.define_CS_stimuli()
     simulation.define_US_stimuli()
@@ -48,7 +54,7 @@ if condition == "without NO":
     simulation.set_nest_kernel()
     simulation.create_network()
     simulation.create_vt(vt_modality=vt_modality)
-    simulation.connect_network_plastic_syn(vt_modality=vt_modality,A_minus=A_minus)
+    simulation.connect_network_plastic_syn(vt_modality=vt_modality,A_minus=A_minus_w_variation)
     simulation.stimulus_geometry(plot=False)
     simulation.define_CS_stimuli()
     simulation.define_US_stimuli()
@@ -73,7 +79,7 @@ readme_content = f"""# Simulation Parameters
                 - CS_rate: {simulation.net_config["devices"]["CS"]["parameters"]["rate"]}
                 - US_rate: {simulation.net_config["devices"]["US"]["parameters"]["rate"]}
                 - noise_rate:{simulation.net_config["devices"]["background_noise"]["parameters"]["rate"]}
-                - A_minus: {simulation.net_config["connection_models"]["parallel_fiber_to_purkinje"]["parameters"]["A_minus"]}
+                - A_minus: {A_minus_w_variation}
                 - A_plus: {simulation.net_config["connection_models"]["parallel_fiber_to_purkinje"]["parameters"]["A_plus"]}
                 - Wmin: {simulation.net_config["connection_models"]["parallel_fiber_to_purkinje"]["parameters"]["Wmin"]}
                 - Wmax: {simulation.net_config["connection_models"]["parallel_fiber_to_purkinje"]["parameters"]["Wmax"]}

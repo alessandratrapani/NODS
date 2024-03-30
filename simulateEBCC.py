@@ -4,9 +4,8 @@ import os
 import dill
 import time
 import nest
-import random
 from nods.core import NODS
-from nods.utils import *
+from utils import *
 import pickle
 
 
@@ -84,9 +83,13 @@ class SimulateEBCC:
             print("vt_modality must be either <1_vt_PC> or <1_vt_pf-PC>")
         return
 
-    def connect_network_plastic_syn(self, vt_modality) -> None:
+    def connect_network_plastic_syn(
+        self, vt_modality, A_minus: float = None, A_plus: float = None
+    ) -> None:
         connection_models = list(self.net_config["connection_models"].keys())
-
+        A_minus = A_minus or self.net_config["connection_models"]["parallel_fiber_to_purkinje"]["parameters"]["A_minus"]        
+        A_plus =  A_plus or self.net_config["connection_models"]["parallel_fiber_to_purkinje"]["parameters"]["A_plus"]
+        
         for conn_model in connection_models:
             pre = self.net_config["connection_models"][conn_model]["pre"]
             post = self.net_config["connection_models"][conn_model]["post"]
@@ -112,12 +115,8 @@ class SimulateEBCC:
                             "synapse_model"
                         ],
                         {
-                            "A_minus": self.net_config["connection_models"][conn_model][
-                                "parameters"
-                            ]["A_minus"],
-                            "A_plus": self.net_config["connection_models"][conn_model][
-                                "parameters"
-                            ]["A_plus"],
+                            "A_minus": A_minus,
+                            "A_plus": A_plus,
                             "Wmin": self.net_config["connection_models"][conn_model][
                                 "parameters"
                             ]["Wmin"],
@@ -182,12 +181,8 @@ class SimulateEBCC:
                             "synapse_model"
                         ],
                         {
-                            "A_minus": self.net_config["connection_models"][conn_model][
-                                "parameters"
-                            ]["A_minus"],
-                            "A_plus": self.net_config["connection_models"][conn_model][
-                                "parameters"
-                            ]["A_plus"],
+                            "A_minus": A_minus,
+                            "A_plus": A_plus,
                             "Wmin": self.net_config["connection_models"][conn_model][
                                 "parameters"
                             ]["Wmin"],
@@ -545,7 +540,7 @@ class SimulateEBCC:
     def simulate_network_with_NO(self, nods_sim) -> None:
         print("simulate with NO")
         print("Single trial length: ", self.between_start)
-        with open(self.data_path+"pfs-PC.pkl", "rb") as file:
+        with open(self.data_path + "pfs-PC.pkl", "rb") as file:
             pfs = pickle.load(file)
         processed = 0
 
@@ -650,5 +645,3 @@ class SimulateEBCC:
         plt.xlabel("Time [ms]")
         plt.ylabel("Neuron ID")
         fig.savefig(f"aa_raster_{cell}.png")
-
-

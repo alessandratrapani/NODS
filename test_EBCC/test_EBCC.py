@@ -1,12 +1,13 @@
 import numpy as np
 import json
-import os
 import dill
 import time
 import nest
-import random
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from nods.core import NODS
-from nods.utils import *
+from utils import *
 import pickle
 
 
