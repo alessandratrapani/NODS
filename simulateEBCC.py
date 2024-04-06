@@ -20,7 +20,7 @@ class SimulateEBCC:
 
     def set_network_configuration(self) -> None:
         """configure network geometry, self.connectivity, and models"""
-        with open("./demo_cerebellum.json", "r") as json_file:
+        with open("./network_configuration.json", "r") as json_file:
             self.net_config = json.load(json_file)
         hdf5_file = "cerebellum_300x_200z.hdf5"
         network_geom_file = self.data_path + "geom_" + hdf5_file
@@ -280,8 +280,6 @@ class SimulateEBCC:
     def stimulus_geometry(self, plot) -> None:
         import plotly.graph_objects as go
 
-        with open("demo_cerebellum.json", "r") as read_file:
-            self.net_config = json.load(read_file)
         pc_color = self.net_config["cell_types"]["purkinje_cell"]["color"][0]
         grc_color = self.net_config["cell_types"]["granule_cell"]["color"][0]
         nos_color = "#82B366"
