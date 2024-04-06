@@ -82,7 +82,7 @@ cbar.set_label('Trials')
 fig_sdf.suptitle(
     "Compare PC learning with standard STDP and with NO-depndent STDP", fontsize=16
 )
-
+plt.tight_layout()
 plt.show()
 fig_sdf.savefig("pc_sdf.svg")
 fig_sdf.savefig("pc_sdf.png")

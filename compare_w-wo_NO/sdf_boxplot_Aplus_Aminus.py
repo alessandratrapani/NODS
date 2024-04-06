@@ -31,7 +31,7 @@ without_NO_color = "#000000"
 cell = "pc_spikes"
 
 
-fig, ax = plt.subplots(figsize=(8, 4))
+fig, ax = plt.subplots(figsize=(5, 4))
 colors = [[without_NO_color, with_NO_color],["blue","blue"],["red","red"]]#, without_NO_color, with_NO_color]
 medianprops = dict(linewidth=1.5, color="white")
 positions = [[1, 3],[1.5, 3.5],[2, 4]]
@@ -40,11 +40,9 @@ for i, variation in enumerate(variation_in_percentage):
     if variation == "0":
         results_path = f"/media/amtra/Samsung_T5/EBCC_4Hz/"
         results_path_NO = f"/media/amtra/Samsung_T5/EBCC_NO_4Hz/"
-        title = "no variation"
     else:
         results_path = f"/media/amtra/Samsung_T5/{A}{variation}/"
         results_path_NO = f"/media/amtra/Samsung_T5/{A}{variation}_NO/"
-        title = f"{A}{variation}%"
         
     spk = get_spike_activity(cell_name=cell, path=results_path)
     sdf_mean_over_trials = []
@@ -94,7 +92,6 @@ for i, variation in enumerate(variation_in_percentage):
 ax.axvline(2.5, linewidth=1, color="black")
 ax.set_xticks([])
 ax.set_ylim(-30, 0)
-ax.set_title(title)
 
 fig.suptitle(f"{A} variation", fontsize=16)
 plt.tight_layout()
