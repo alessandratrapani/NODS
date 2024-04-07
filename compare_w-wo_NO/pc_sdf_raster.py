@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import matplotlib.patches as patches
 
-
+rooth_path = "/media/amtra/Samsung_T5/results/"
 with open("network_configuration.json", "r") as json_file:
     net_config = json.load(json_file)
 
@@ -25,13 +25,13 @@ with_NO_color = net_config["devices"]["nNOS"]["color"][0]
 without_NO_color = "#000000"
 cell = "pc_spikes"
 
-results_path = f"/media/amtra/Samsung_T5/RISULTATI_TESI/complete_EBCC/EBCC_4Hz/"
+results_path = rooth_path + "complete_EBCC/EBCC_4Hz/"
 spk = get_spike_activity(cell_name=cell, path=results_path)
 evs_cell = spk[:, 0]
 sdf_mean_cell = []
 sdf_change_alltrials = []
 
-results_path_NO = f"/media/amtra/Samsung_T5/RISULTATI_TESI/complete_EBCC/EBCC_NO_4Hz/"
+results_path_NO = rooth_path + "complete_EBCC/EBCC_NO_4Hz/"
 spk_NO = get_spike_activity(cell_name=cell, path=results_path_NO)
 evs_cell_NO = spk[:, 0]
 sdf_mean_cell_NO = []
@@ -72,10 +72,9 @@ axs_sdf[1].legend()
 cbar = plt.colorbar(sm, ax=axs_sdf.ravel().tolist(), orientation='vertical')
 cbar.set_label('Trials')
 
-fig_sdf.suptitle("Compare PC learning: SDF", fontsize=16)
+# fig_sdf.suptitle("Compare PC learning: SDF", fontsize=16)
 plt.show()
-fig_sdf.savefig("pc_sdf.svg")
-fig_sdf.savefig("pc_sdf.png")
+fig_sdf.savefig(rooth_path+"figures/pc_sdf.png")
 
 """
 # %% PLOT RATSER

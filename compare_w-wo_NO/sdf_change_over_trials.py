@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 
+rooth_path = "/media/amtra/Samsung_T5/results/"
 noise_rates = [0, 4, 8]
 with open("network_configuration.json", "r") as json_file:
     net_config = json.load(json_file)
@@ -29,13 +30,13 @@ cell = "pc_spikes"
 
 for i, noise_rate in enumerate(noise_rates):
    
-    results_path = f"/media/amtra/Samsung_T5/RISULTATI_TESI/complete_EBCC/EBCC_{noise_rate}Hz/"
+    results_path = rooth_path + f"complete_EBCC/EBCC_{noise_rate}Hz/"
     spk = get_spike_activity(cell_name=cell, path=results_path)
     sdf_mean_over_trials = []
     sdf_baseline = np.zeros((n_trials))
     sdf_cr = np.zeros((n_trials))
 
-    results_path_NO = f"/media/amtra/Samsung_T5/RISULTATI_TESI/complete_EBCC/EBCC_NO_{noise_rate}Hz/"
+    results_path_NO = rooth_path + f"complete_EBCC/EBCC_NO_{noise_rate}Hz/"
     spk_NO = get_spike_activity(cell_name=cell, path=results_path_NO)
     sdf_mean_over_trials_NO = []
     sdf_baseline_NO = np.zeros((n_trials))
@@ -76,8 +77,7 @@ for i, noise_rate in enumerate(noise_rates):
     axs[1].set_title("NO-dependent STDP")
     axs[0].legend()
     axs[1].legend()
-    plt.show()
+    # plt.show()
     plt.tight_layout()
-    fig.suptitle("SDF change over trials", fontsize=16)
-    fig.savefig(f"sdf_change_{noise_rate}Hz.png")
-    fig.savefig(f"sdf_change_{noise_rate}Hz.svg")
+    # fig.suptitle("SDF change over trials", fontsize=16)
+    fig.savefig(rooth_path+f"figures/sdf_change_{noise_rate}Hz.png")
