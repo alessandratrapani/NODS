@@ -8,8 +8,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
+import scipy.stats as st
 
 noise_rates = [0, 4, 8]
+rooth_path = "/media/amtra/Samsung_T5/results/"
 with open("network_configuration.json", "r") as json_file:
     net_config = json.load(json_file)
 
@@ -26,8 +28,6 @@ with_NO_color = net_config["devices"]["nNOS"]["color"][0]
 without_NO_color = "#000000"
 
 cell = "pc_spikes"
-results_path = f"/media/amtra/Samsung_T5/EBCC_4Hz/"
-results_path_NO = f"/media/amtra/Samsung_T5/EBCC_NO_4Hz/"
 
 fig, axs = plt.subplots(1,3,figsize=(8,4))
 colors = [without_NO_color, with_NO_color, without_NO_color, with_NO_color]
@@ -36,13 +36,13 @@ positions = [1,2,4,5]
 
 for i, noise_rate in enumerate(noise_rates):
    
-    results_path = f"/media/amtra/Samsung_T5/EBCC_{noise_rate}Hz/"
+    results_path = rooth_path + f"complete_EBCC/EBCC_{noise_rate}Hz/"
     spk = get_spike_activity(cell_name=cell, path=results_path)
     sdf_mean_over_trials = []
     sdf_baseline = np.zeros((n_trials))
     sdf_cr = np.zeros((n_trials))
 
-    results_path_NO = f"/media/amtra/Samsung_T5/EBCC_NO_{noise_rate}Hz/"
+    results_path_NO = rooth_path + f"complete_EBCC/EBCC_NO_{noise_rate}Hz/"
     spk_NO = get_spike_activity(cell_name=cell, path=results_path_NO)
     sdf_mean_over_trials_NO = []
     sdf_baseline_NO = np.zeros((n_trials))
@@ -71,8 +71,17 @@ for i, noise_rate in enumerate(noise_rates):
     sdf_change_cr_NO = sdf_cr_NO[1:] - sdf_cr_NO[1]
 
     boxes = [sdf_change_baseline[-10:],sdf_change_baseline_NO[-10:],sdf_change_cr[-10:],sdf_change_cr_NO[-10:]]
-
+    print(f"Noise level: {noise_rate}")
+    stat, p= st.wilcoxon(x=sdf_change_baseline[-10:],y=sdf_change_baseline_NO[-10:])
+    print(f"baselines : {p}")
+    stat, p = st.wilcoxon(x=sdf_change_baseline[-10:],y=sdf_change_cr[-10:])
+    print(f"baseline vs cr : {p}")
+    stat, p = st.wilcoxon(x=sdf_change_cr_NO[-10:],y=sdf_change_baseline_NO[-10:])
+    print(f"baselines vs cr wNO : {p}")
+    stat, p = st.wilcoxon(x=sdf_change_cr[-10:],y=sdf_change_cr_NO[-10:])
+    print(f"cr : {p}")
     bp1 = axs[i].boxplot(boxes, patch_artist=True, medianprops=medianprops, positions=positions)
+
     for patch, color  in zip(bp1['boxes'],colors):
         patch.set_facecolor(color)
     axs[i].axvline(3,linewidth=1, color='black')
