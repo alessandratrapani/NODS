@@ -1,0 +1,23 @@
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from simulateEBCC import SimulateEBCC
+
+data_path = "./data/"
+condition = "with NO"
+A_minus =   -0.0005
+variation = 0.1
+A_minus_w_variation =   A_minus + (A_minus*variation)
+source_folder = "./"
+destination_folder = "./results"
+file_prefixes = [
+    "glom_spikes",
+    "pc_spikes",
+    "io_spikes",
+    "golgi_spikes",
+    "basket_spikes",
+    "stellate_spikes",
+    "granule_spikes",
+    "pf-PC",
+    "aa_",
+]
