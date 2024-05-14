@@ -33,7 +33,7 @@ class SimulateEBCC:
         ]
 
     def set_nest_kernel(self) -> None:
-        nest.Install("cerebmodule")
+        #nest.Install("cerebmodule")
         RESOLUTION = 1.0
         CORES = 24
         nest.ResetKernel()

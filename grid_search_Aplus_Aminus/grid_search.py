@@ -1,5 +1,6 @@
 import sys
 import os
+import nest
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from simulateEBCC import SimulateEBCC
 
@@ -23,14 +24,16 @@ file_prefixes = [
 ]
 destination_folder = os.path.join(destination_folder, folder)
 os.makedirs(destination_folder, exist_ok=True)
+nest.Install("cerebmodule")
 
 for i in range(1,7):
     for j in range(1,7):
         
-        A_minus = -10**(-i)
-        A_plus = 10**(-j)
-
-        simulation_description = f"EBCC with A_minus, A_plus= {A_minus},{A_minus}, {condition}"
+        A_minus_grid = -pow(10,-6)
+        A_plus_grid = pow(10,-6)
+        print(A_minus_grid)
+        print(A_plus_grid)
+        simulation_description = f"EBCC with A_minus, A_plus= {A_minus_grid},{A_plus_grid}, {condition}"
         print(simulation_description)
 
 
@@ -41,11 +44,11 @@ for i in range(1,7):
         simulation.set_nest_kernel()
         simulation.create_network()
         simulation.create_vt(vt_modality=vt_modality)
-        simulation.connect_network_plastic_syn(vt_modality=vt_modality,A_minus=A_minus)
+        simulation.connect_network_plastic_syn(vt_modality=vt_modality,A_minus=A_minus_grid, A_plus=A_plus_grid)
         simulation.stimulus_geometry(plot=False)
         simulation.define_CS_stimuli()
         simulation.define_US_stimuli()
-        simulation.define_bg_noise()
+        simulation.define_bg_noise(rate=0)
         simulation.define_recorders()
         simulation.simulate_network()
 
@@ -62,8 +65,8 @@ for i in range(1,7):
                         - CS_rate: {simulation.net_config["devices"]["CS"]["parameters"]["rate"]}
                         - US_rate: {simulation.net_config["devices"]["US"]["parameters"]["rate"]}
                         - noise_rate:{simulation.net_config["devices"]["background_noise"]["parameters"]["rate"]}
-                        - A_minus: {A_minus}
-                        - A_plus: {A_plus}
+                        - A_minus: {A_minus_grid}
+                        - A_plus: {A_plus_grid}
                         - Wmin: {simulation.net_config["connection_models"]["parallel_fiber_to_purkinje"]["parameters"]["Wmin"]}
                         - Wmax: {simulation.net_config["connection_models"]["parallel_fiber_to_purkinje"]["parameters"]["Wmax"]}
                         - CS_radius: {simulation.net_config["devices"]["CS"]["radius"]}
@@ -77,6 +80,6 @@ for i in range(1,7):
             readme_file.write(readme_content)
 
         from move_files import move_files_to_folder
-        dest_folder = os.path.join(destination_folder, str(i)+"_"+str(j))
-        move_files_to_folder(source_folder, dest_folder, file_prefixes)
+        move_files_to_folder(source_folder, destination_folder, file_prefixes)
         del simulation
+        nest.ResetKernel()
