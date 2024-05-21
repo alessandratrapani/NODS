@@ -6,9 +6,10 @@ from simulateEBCC import SimulateEBCC
 
 data_path = "./data/"
 condition = "without NO"
-folder = "grid_search"
+folder = "grid_search/ord_of_mag"
 #A_minus = -0.0005
 #A_plus = 0.0000225
+noise_rate = 0.0
 source_folder = "./"
 destination_folder = "./results"
 file_prefixes = [
@@ -28,9 +29,9 @@ nest.Install("cerebmodule")
 
 for i in range(1,7):
     for j in range(1,7):
-        
-        A_minus_grid = -pow(10,-6)
-        A_plus_grid = pow(10,-6)
+    
+        A_minus_grid = -pow(10,-i)
+        A_plus_grid = pow(10,-j)
         print(A_minus_grid)
         print(A_plus_grid)
         simulation_description = f"EBCC with A_minus, A_plus= {A_minus_grid},{A_plus_grid}, {condition}"
@@ -48,7 +49,7 @@ for i in range(1,7):
         simulation.stimulus_geometry(plot=False)
         simulation.define_CS_stimuli()
         simulation.define_US_stimuli()
-        simulation.define_bg_noise(rate=0)
+        simulation.define_bg_noise(rate=noise_rate)
         simulation.define_recorders()
         simulation.simulate_network()
 
@@ -64,7 +65,7 @@ for i in range(1,7):
                         - n_trials: {simulation.net_config["devices"]["CS"]["parameters"]["n_trials"]}
                         - CS_rate: {simulation.net_config["devices"]["CS"]["parameters"]["rate"]}
                         - US_rate: {simulation.net_config["devices"]["US"]["parameters"]["rate"]}
-                        - noise_rate:{simulation.net_config["devices"]["background_noise"]["parameters"]["rate"]}
+                        - noise_rate:{noise_rate}
                         - A_minus: {A_minus_grid}
                         - A_plus: {A_plus_grid}
                         - Wmin: {simulation.net_config["connection_models"]["parallel_fiber_to_purkinje"]["parameters"]["Wmin"]}
@@ -79,7 +80,8 @@ for i in range(1,7):
         with open("./aa_sim_description.md", "w") as readme_file:
             readme_file.write(readme_content)
 
+        move_folder = os.path.join(destination_folder, 'min'+str(i)+'_plus'+str(j))
         from move_files import move_files_to_folder
-        move_files_to_folder(source_folder, destination_folder, file_prefixes)
+        move_files_to_folder(source_folder, move_folder, file_prefixes)
         del simulation
         nest.ResetKernel()
