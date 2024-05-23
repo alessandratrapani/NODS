@@ -3,10 +3,15 @@ import os
 import nest
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from simulateEBCC import SimulateEBCC
+import numpy as np
+
+
+min = 4
+max = 6
 
 data_path = "./data/"
 condition = "without NO"
-folder = "grid_search/ord_of_mag"
+folder = f"grid_search/grid_zoom_-{min}_-{max}"
 #A_minus = -0.0005
 #A_plus = 0.0000225
 noise_rate = 0.0
@@ -27,11 +32,14 @@ destination_folder = os.path.join(destination_folder, folder)
 os.makedirs(destination_folder, exist_ok=True)
 nest.Install("cerebmodule")
 
-for i in range(1,7):
-    for j in range(1,7):
-    
-        A_minus_grid = -pow(10,-i)
-        A_plus_grid = pow(10,-j)
+values = np.logspace(-min,-max, 6)
+#values = np.arange()
+
+for i in range(0,6):
+    for j in range(0,6):
+
+        A_minus_grid = -values[i]
+        A_plus_grid = values[j]
         print(A_minus_grid)
         print(A_plus_grid)
         simulation_description = f"EBCC with A_minus, A_plus= {A_minus_grid},{A_plus_grid}, {condition}"
@@ -80,7 +88,7 @@ for i in range(1,7):
         with open("./aa_sim_description.md", "w") as readme_file:
             readme_file.write(readme_content)
 
-        move_folder = os.path.join(destination_folder, 'min'+str(i)+'_plus'+str(j))
+        move_folder = os.path.join(destination_folder, f'min{i}_plus{j}')
         from move_files import move_files_to_folder
         move_files_to_folder(source_folder, move_folder, file_prefixes)
         del simulation
