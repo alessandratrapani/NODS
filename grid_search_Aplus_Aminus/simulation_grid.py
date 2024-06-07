@@ -9,26 +9,15 @@ import gc
 # variables passed with os.system 
 # {i} {j} {n_sim} {values_min} {values_plus} {min} {max}
 
-i = int(sys.argv[1])
-j = int(sys.argv[2])
-k = int(sys.argv[3])
-min = int(sys.argv[4])
-max = int(sys.argv[5])
-
-"""values = np.array([[7*10**-4,8*10**-5], [7*10**-4,4*10**-5], [5*10**-4,4*10**-5], [4*10**-4,9*10**-5], 
-                   [4*10**-4,7*10**-5], [3*10**-4,8*10**-5], [3*10**-4,4*10**-5]])"""
-values = np.array([4*10**-4,8*10**-5])
-
-
-#values_min = np.array([7*10**-4, 5*10**-4, 3*10**-4])
-#values_plus = np.array([1.1*10**-4, 9*10**-5, 7*10**-5])
+noise_rate = float(sys.argv[1])
+k = int(sys.argv[2])
 
 data_path = "./data/"
 condition = "with NO"
 folder_grid = f"grid_search/grid_NO"
-#A_minus = -0.0005
-#A_plus = 0.0000225
-noise_rate = 0.0
+A_minus = -4*10**-4
+A_plus = 8*10**-5
+#noise_rate = 8.0
 source_folder = "./"
 destination_folder = "./results"
 file_prefixes = [
@@ -46,11 +35,10 @@ destination_folder = os.path.join(destination_folder, folder_grid)
 os.makedirs(destination_folder, exist_ok=True)
 nest.Install("cerebmodule")
 
-A_minus_grid = values[0]
-A_plus_grid = values[1]
-print(A_minus_grid)
-print(A_plus_grid)
-simulation_description = f"EBCC with A_minus, A_plus= {A_minus_grid},{A_plus_grid}, {condition}"
+print(A_minus)
+print(A_plus)
+print(noise_rate)
+simulation_description = f"EBCC with A_minus, A_plus= {A_minus},{A_plus}, {condition}"
 print(simulation_description)
 
 
@@ -60,12 +48,13 @@ simulation.set_network_configuration()
 simulation.set_nest_kernel()
 simulation.create_network()
 simulation.create_vt(vt_modality=vt_modality)
-simulation.connect_network_plastic_syn(vt_modality=vt_modality,A_minus=A_minus_grid, A_plus=A_plus_grid)
+simulation.connect_network_plastic_syn(vt_modality=vt_modality,A_minus=A_minus, A_plus=A_plus)
 simulation.stimulus_geometry(plot=False)
 simulation.define_CS_stimuli()
 simulation.define_US_stimuli()
 simulation.define_bg_noise(rate=noise_rate)
 simulation.define_recorders()
+#simulation.simulate_network()
 nods_sim = simulation.initialize_nods()
 simulation.simulate_network_with_NO(nods_sim)
 
@@ -84,8 +73,8 @@ readme_content = f"""# Simulation Parameters
                 - CS_rate: {simulation.net_config["devices"]["CS"]["parameters"]["rate"]}
                 - US_rate: {simulation.net_config["devices"]["US"]["parameters"]["rate"]}
                 - noise_rate:{noise_rate}
-                - A_minus: {A_minus_grid}
-                - A_plus: {A_plus_grid}
+                - A_minus: {A_minus}
+                - A_plus: {A_plus}
                 - Wmin: {simulation.net_config["connection_models"]["parallel_fiber_to_purkinje"]["parameters"]["Wmin"]}
                 - Wmax: {simulation.net_config["connection_models"]["parallel_fiber_to_purkinje"]["parameters"]["Wmax"]}
                 - CS_radius: {simulation.net_config["devices"]["CS"]["radius"]}
@@ -99,7 +88,7 @@ with open("./aa_sim_description.md", "w") as readme_file:
     readme_file.write(readme_content)
 readme_file.close()
 
-folder_sim = f'min{4}_plus{8}'
+folder_sim = f'{int(noise_rate)}Hz'
 move_folder = os.path.join(os.path.join(destination_folder, folder_sim), f'{k}')
 #os.makedirs(os.path.join(destination_folder, folder_sim), exist_ok=True)
 from move_files import move_files_to_folder
