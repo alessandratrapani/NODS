@@ -1,4 +1,4 @@
-# %%
+#%%
 import sys
 import os
 sys.path.append(os.path.join(os.getcwd(), '..'))
@@ -8,10 +8,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
-import scipy.stats as st
 
-noise_rates = [0]
 rooth_path = "/home/nomodel/code/NODS/results/grid_search/"
+
 with open("/home/nomodel/code/NODS/network_configuration.json", "r") as json_file:
     net_config = json.load(json_file)
 
@@ -26,22 +25,24 @@ CS_color = net_config["colors"]["CS"]
 US_color = net_config["colors"]["US"]
 with_NO_color = net_config["devices"]["nNOS"]["color"][0]
 without_NO_color = "#000000"
-
 cell = "pc_spikes"
 
-fig, axs = plt.subplots(1,2,figsize=(8,4))
+noise_rate = [0,4]
 colors = [without_NO_color, with_NO_color, without_NO_color, with_NO_color]
-medianprops = dict(linewidth=1.5, color='white')
-positions = [1,2,4,5]
 
-for i, noise_rate in enumerate(noise_rates):
+for i,noise in enumerate(noise_rate):
+
+    #result_path = os.path.join(rooth_path,'0Hz/')
+    #folder_path = result_path + f"min4_plus8/"
+
     sdf_mean_trials_simulations = []
     sdf_mean_trials_simulations_NO = []
+
     for k in range(0,10):
-        results_path = rooth_path + f"{noise_rate}Hz/min4_plus8/{k}/"
+        results_path = rooth_path + f"{noise}Hz/min4_plus8/{k}/"
         spk = get_spike_activity(cell_name=cell, path=results_path)
 
-        results_path_NO = rooth_path + f"grid_NO/{noise_rate}Hz/{k}/"
+        results_path_NO = rooth_path + f"grid_NO/{noise}Hz/{k}/"
         spk_NO = get_spike_activity(cell_name=cell, path=results_path_NO)
 
         sdf_mean_over_trials = []
@@ -93,27 +94,22 @@ for i, noise_rate in enumerate(noise_rates):
     sdf_change_bs_NO = sdf_change_bs_NO[1:] - sdf_change_bs_NO[1]
     sdf_change_cr_NO = sdf_change_cr_NO[1:] - sdf_change_cr_NO[1]
 
-    boxes = [sdf_change_bs[-5:],sdf_change_bs_NO[-5:],sdf_change_cr[-5:],sdf_change_cr_NO[-5:]]
-    print(f"Noise level: {noise_rate}")
-    stat, p= st.wilcoxon(x=sdf_change_bs[-5:],y=sdf_change_bs_NO[-5:])
-    print(f"baselines : {p}")
-    stat, p = st.wilcoxon(x=sdf_change_bs[-5:],y=sdf_change_cr[-5:])
-    print(f"baseline vs cr : {p}")
-    stat, p = st.wilcoxon(x=sdf_change_cr_NO[-5:],y=sdf_change_bs_NO[-5:])
-    print(f"baselines vs cr wNO : {p}")
-    stat, p = st.wilcoxon(x=sdf_change_cr[-5:],y=sdf_change_cr_NO[-5:])
-    print(f"cr : {p}")
-    bp1 = axs[i].boxplot(boxes, patch_artist=True, medianprops=medianprops, positions=positions)
-
-    for patch, color  in zip(bp1['boxes'],colors):
-        patch.set_facecolor(color)
-    axs[i].axvline(3,linewidth=1, color='black')
-    axs[i].set_xticks([])
-    axs[i].set_ylim(-30,0)
-    axs[i].set_title(f'CS: 40Hz, BkG noise: {noise_rate}Hz')  
-
-plt.tight_layout()
-plt.show()
-fig.savefig(rooth_path + f"sdf_boxplots_0.png")
-#fig.savefig(f"sdf_boxplots_04.svg")
+    
+    fig,axs = plt.subplots(1,2,sharey=True)
+    axs[0].plot(sdf_change_bs,"--o",markersize=3,color=without_NO_color,label="Baseline")
+    axs[0].plot(sdf_change_cr, "-o", markersize=3, color=without_NO_color, label="CR window")
+    axs[1].plot(sdf_change_bs_NO,'--o',markersize=3,color=with_NO_color,label="Baseline")
+    axs[1].plot(sdf_change_cr_NO, "-o", markersize=3, color=with_NO_color, label="CR window")
+    axs[0].set_ylim(-30,10)
+    axs[0].set_xlabel("Trials")
+    axs[1].set_xlabel("Trials")
+    axs[0].set_ylabel("SDF change [Hz]")
+    axs[0].set_title("standard STDP")
+    axs[1].set_title("NO-dependent STDP")
+    axs[0].legend()
+    axs[1].legend()
+    #plt.show()
+    plt.tight_layout()
+    #fig.suptitle("SDF change over trials", fontsize=16)
+    fig.savefig(rooth_path+f"sdf_change_{noise}Hz.png")
 # %%

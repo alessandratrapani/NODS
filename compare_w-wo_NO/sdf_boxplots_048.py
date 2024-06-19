@@ -29,7 +29,7 @@ without_NO_color = "#000000"
 
 cell = "pc_spikes"
 
-fig, axs = plt.subplots(1,3,figsize=(8,4))
+fig, axs = plt.subplots(3,1,figsize=(4,8))
 colors = [without_NO_color, with_NO_color, without_NO_color, with_NO_color]
 medianprops = dict(linewidth=1.5, color='white')
 positions = [1,2,4,5]
