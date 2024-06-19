@@ -17,6 +17,7 @@ export OMP_NUM_THREADS=48
 
 module load python/3.8.12--gcc--10.2.0
 module load spack
+module load gsl
 spack load libtool@2.4.6%gcc@10.2.0 arch=linux-centos8-cascadelake
 spack load py-cython@0.29.24%gcc@10.2.0 arch=linux-centos8-cascadelake
 source /g100_work/EIRI_E_POLIMI/no_plasticity/NO_env/bin/activate
