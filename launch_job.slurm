@@ -23,9 +23,6 @@ spack load py-cython@0.29.24%gcc@10.2.0 arch=linux-centos8-cascadelake
 source /g100_work/EIRI_E_POLIMI/no_plasticity/NO_env/bin/activate
 source /g100_work/EIRI_E_POLIMI/no_plasticity/nest-install/bin/nest_vars.sh 
 
-export NEST_MODULE_PATH=/g100_work/EIRI_E_POLIMI/no_plasticity/nest-install/lib/nest:$NEST_MODULE_PATH
-export SLI_PATH=/g100_work/EIRI_E_POLIMI/no_plasticity/nest-install/share/nest/sli:$SLI_PATH
-
 cd $WORK/no_plasticity
 
 srun python test.py
