@@ -23,6 +23,9 @@ spack load py-cython@0.29.24%gcc@10.2.0 arch=linux-centos8-cascadelake
 source /g100_work/EIRI_E_POLIMI/no_plasticity/NO_env/bin/activate
 source /g100_work/EIRI_E_POLIMI/no_plasticity/nest-install/bin/nest_vars.sh 
 
-cd $WORK/no_plasticity
+cd $WORK/no_plasticity/NODS/CINECA_simulations
 
-srun python test.py
+mkdir simulation_1
+
+
+

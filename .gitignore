@@ -130,3 +130,5 @@ data/
 cerebellum_NODS.hdf5
 cerebellum_NODS_smaller.hdf5
 p.p
+
+CINECA_simulations/results/
