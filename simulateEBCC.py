@@ -13,20 +13,27 @@ class SimulateEBCC:
     def __init__(self, data_path="./data/") -> None:
         self.data_path = data_path
         params_filename = "model_parameters.json"
-        root_path = "./nods/"
+        root_path = "/g100_work/EIRI_E_POLIMI/no_plasticity/NODS/nods/"
         with open(os.path.join(root_path, params_filename), "r") as read_file:
             self.params = json.load(read_file)
         pass
 
     def set_network_configuration(self) -> None:
         """configure network geometry, self.connectivity, and models"""
-        with open("./network_configuration.json", "r") as json_file:
+        with open("/g100_work/EIRI_E_POLIMI/no_plasticity/NODS/network_configuration.json", "r") as json_file:
             self.net_config = json.load(json_file)
         hdf5_file = "cerebellum_300x_200z.hdf5"
         network_geom_file = self.data_path + "geom_" + hdf5_file
         network_connectivity_file = self.data_path + "conn_" + hdf5_file
         self.neuronal_populations = dill.load(open(network_geom_file, "rb"))
-        self.connectivity = dill.load(open(network_connectivity_file, "rb"))
+        try:
+            self.connectivity = dill.load(open(network_connectivity_file, "rb"))
+        except EOFError:
+            print(f"Error: The file '{network_connectivity_file}' is empty or corrupted.")
+        except FileNotFoundError:
+            print(f"Error: The file '{network_connectivity_file}' does not exist.")
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
         self.n_trials = self.net_config["devices"]["CS"]["parameters"]["n_trials"]
         self.between_start = self.net_config["devices"]["CS"]["parameters"][
             "between_start"
@@ -35,7 +42,7 @@ class SimulateEBCC:
     def set_nest_kernel(self) -> None:
         #nest.Install("cerebmodule")
         RESOLUTION = 1.0
-        CORES = 24
+        CORES = 48
         nest.ResetKernel()
 
         msd = 1000  # master seed

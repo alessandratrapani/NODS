@@ -1,18 +1,15 @@
 import sys
 import os
 import nest
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..')))
 from simulateEBCC import SimulateEBCC
 import numpy as np
 import gc
 
-# variables passed with os.system 
-# {i} {j} {n_sim} {values_min} {values_plus} {min} {max}
-
 noise_rate = float(sys.argv[1])
 k = int(sys.argv[2])
 
-data_path = "./data/"
+data_path = "/g100_work/EIRI_E_POLIMI/no_plasticity/NODS/data/"
 condition = "with NO"
 folder_grid = f"grid_search/grid_NO"
 A_minus = -4*10**-4
@@ -31,8 +28,6 @@ file_prefixes = [
     "pf-PC",
     "aa_",
 ]
-destination_folder = os.path.join(destination_folder, folder_grid)
-os.makedirs(destination_folder, exist_ok=True)
 nest.Install("cerebmodule")
 
 print(A_minus)
@@ -87,12 +82,6 @@ readme_content = f"""# Simulation Parameters
 with open("./aa_sim_description.md", "w") as readme_file:
     readme_file.write(readme_content)
 readme_file.close()
-
-folder_sim = f'{int(noise_rate)}Hz'
-move_folder = os.path.join(os.path.join(destination_folder, folder_sim), f'{k}')
-#os.makedirs(os.path.join(destination_folder, folder_sim), exist_ok=True)
-from move_files import move_files_to_folder
-move_files_to_folder(source_folder, move_folder, file_prefixes)
 
 nest.ResetKernel()
 del simulation

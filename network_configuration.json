@@ -543,7 +543,7 @@
                 "burst_dur": 280,
                 "rate": 40.0,
                 "between_start": 500,
-                "n_trials": 30
+                "n_trials": 50
             },
             "connection": {
                 "rule": "one_to_one"

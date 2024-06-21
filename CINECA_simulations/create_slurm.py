@@ -1,7 +1,7 @@
 import os
 import subprocess
 
-def create_slurm_script(var1, var2):
+def create_slurm_script(noise, simulation):
     slurm_script_content = f"""#!/bin/bash
 #SBATCH --time=01:00:00
 #SBATCH --nodes=1
@@ -13,7 +13,7 @@ def create_slurm_script(var1, var2):
 #SBATCH --output="job-%j.log"
 #SBATCH --error="job-%j.log"
 #SBATCH --mail-type=END
-#SBATCH --mail-user=alberto.antonietti@polimi.it
+#SBATCH --mail-user=carloandrea.sartori@polimi.it
 
 export SRUN_CPUS_PER_TASK=$SLURM_CPUS_PER_TASK
 export OMP_NUM_THREADS=48
@@ -26,12 +26,18 @@ spack load py-cython@0.29.24%gcc@10.2.0 arch=linux-centos8-cascadelake
 source /g100_work/EIRI_E_POLIMI/no_plasticity/NO_env/bin/activate
 source /g100_work/EIRI_E_POLIMI/no_plasticity/nest-install/bin/nest_vars.sh
 
-cd $WORK/no_plasticity/NODS/CINECA_simulations
+cd $WORK/no_plasticity/NODS/CINECA_simulations/results
 
-mkdir simulation_{var1}_{var2}
+mkdir simulation_{noise}Hz_sim{simulation}
 
-python simulation_grid {var1} {var2}
+cp /g100_work/EIRI_E_POLIMI/no_plasticity/NODS/grid_search_Aplus_Aminus/simulation.py simulation_{noise}Hz_sim{simulation}/
+
+cd simulation_{noise}Hz_sim{simulation}
+
+python simulation.py {noise} {simulation}
 """
+
+
     slurm_script_path = "run_simulation.slurm"
     
     with open(slurm_script_path, "w") as slurm_file:
@@ -49,8 +55,10 @@ def submit_slurm_script(script_path):
         print(e.stderr.decode())
 
 if __name__ == "__main__":
-    var1 = input("Enter var1: ")
-    var2 = input("Enter var2: ")
 
-    slurm_script_path = create_slurm_script(var1, var2)
+    #noise_rate = [0,4,8]
+    noise = input("Enter noise: ")
+    simulation = input("Enter simulation: ")
+
+    slurm_script_path = create_slurm_script(noise, simulation)
     submit_slurm_script(slurm_script_path)
