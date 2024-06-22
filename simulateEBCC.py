@@ -26,14 +26,7 @@ class SimulateEBCC:
         network_geom_file = self.data_path + "geom_" + hdf5_file
         network_connectivity_file = self.data_path + "conn_" + hdf5_file
         self.neuronal_populations = dill.load(open(network_geom_file, "rb"))
-        try:
-            self.connectivity = dill.load(open(network_connectivity_file, "rb"))
-        except EOFError:
-            print(f"Error: The file '{network_connectivity_file}' is empty or corrupted.")
-        except FileNotFoundError:
-            print(f"Error: The file '{network_connectivity_file}' does not exist.")
-        except Exception as e:
-            print(f"An unexpected error occurred: {e}")
+        self.connectivity = dill.load(open(network_connectivity_file, "rb"))
         self.n_trials = self.net_config["devices"]["CS"]["parameters"]["n_trials"]
         self.between_start = self.net_config["devices"]["CS"]["parameters"][
             "between_start"
