@@ -27,7 +27,7 @@ with_NO_color = net_config["devices"]["nNOS"]["color"][0]
 without_NO_color = "#000000"
 cell = "pc_spikes"
 
-noise_rate = [0,4]
+noise_rate = [8]
 colors = [without_NO_color, with_NO_color, without_NO_color, with_NO_color]
 
 for i,noise in enumerate(noise_rate):

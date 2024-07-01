@@ -10,7 +10,7 @@ import seaborn as sns
 import os
 import scipy.stats as st
 
-noise_rate = [0,4]
+noise_rate = [0,4,8]
 rooth_path = "/home/nomodel/code/NODS/results/grid_search/"
 with open("/home/nomodel/code/NODS/network_configuration.json", "r") as json_file:
     net_config = json.load(json_file)
@@ -29,7 +29,7 @@ without_NO_color = "#000000"
 
 cell = "pc_spikes"
 
-fig, axs = plt.subplots(1,2,figsize=(8,4))
+fig, axs = plt.subplots(1,3,figsize=(8,4))
 colors = [without_NO_color, with_NO_color, without_NO_color, with_NO_color]
 medianprops = dict(linewidth=1.5, color='white')
 positions = [1,2,4,5]
@@ -115,6 +115,6 @@ for i,noise in enumerate(noise_rate):
 
 plt.tight_layout()
 plt.show()
-fig.savefig(rooth_path + f"sdf_boxplots_stat_04.png")
+fig.savefig(rooth_path + f"sdf_boxplots_stat_048.png")
 #fig.savefig(f"sdf_boxplots_04.svg")
 # %%

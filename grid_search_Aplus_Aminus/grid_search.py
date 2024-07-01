@@ -10,7 +10,7 @@ dim_min = 3
 dim_plus = 3
 n_sim = 10
 
-noise_rate = 0.0
+noise_rate = 4.0
 
-for k in range(3,n_sim):
+for k in range(1,n_sim):
     os.system(f'python /home/nomodel/code/NODS/grid_search_Aplus_Aminus/simulation_grid.py {noise_rate} {k}')
