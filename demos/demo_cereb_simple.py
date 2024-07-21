@@ -1,16 +1,13 @@
 #%%-------------------------------------------IMPORT------------------------------OK
 '''Import'''
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import numpy as np
 import pandas as pd
-import math as m
 import json
-import os
-
-import sys
 import random
-import dill
 import time
-import multiprocessing
 #**************NEST********************
 import nest
 nest.Install("cerebmodule")
@@ -24,17 +21,16 @@ nest.SetKernelStatus({'grng_seed' : seed_g })
 nest.SetKernelStatus({'rng_seeds' : [seed_r]})
 nest.set_verbosity("M_ERROR")
 #**************NODS********************
-sys.path.insert(1, './nods/')
-from core import NODS
+
+from nods.core import NODS
 from utils import *
-from plot import plot_cell_activity
+from nods.plot import plot_cell_activity
 params_filename = 'model_parameters.json'
 root_path = './nods/'
 with open(os.path.join(root_path,params_filename), "r") as read_file_param:
     params = json.load(read_file_param)
 #**************PLOTS********************
 import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
 import plotly.graph_objects as go
 import seaborn as sns
 with open('demo_cereb_simple.json', "r") as read_file:

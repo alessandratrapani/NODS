@@ -87,7 +87,7 @@ class NODS:
                                 # lists update
                                 source_id = all_nNOS[nos_id]['source_id']
                                 self.source_to_eval.append(source_id)
-                                self.relative_dist.append([np.int(source_id), np.int(nos_id), np.int(evpoint_id), d, np.int(cluster)]) # 0: id_source, 1: id_nos, 2:id_evpoint, 3: relative_distance
+                                self.relative_dist.append([int(source_id), int(nos_id), int(evpoint_id), d, int(cluster)]) # 0: id_source, 1: id_nos, 2:id_evpoint, 3: relative_distance
         # elimination repetition of same source
         self.source_to_eval = np.unique(self.source_to_eval)
 

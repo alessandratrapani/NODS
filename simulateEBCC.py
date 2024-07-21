@@ -4,25 +4,23 @@ import os
 import dill
 import time
 import nest
-import random
 from nods.core import NODS
-from nods.utils import *
+from utils import *
 import pickle
 
 
-class TestEBCC:
-    def __init__(self, data_path="./data/", simulation_description="") -> None:
+class SimulateEBCC:
+    def __init__(self, data_path="./data/") -> None:
         self.data_path = data_path
-        self.simulation_description = simulation_description
         params_filename = "model_parameters.json"
         root_path = "./nods/"
         with open(os.path.join(root_path, params_filename), "r") as read_file:
             self.params = json.load(read_file)
         pass
 
-    def set_network_configuration(self, vt_modality, connect_vt_to_io) -> None:
+    def set_network_configuration(self) -> None:
         """configure network geometry, self.connectivity, and models"""
-        with open("./demo_cerebellum.json", "r") as json_file:
+        with open("./network_configuration.json", "r") as json_file:
             self.net_config = json.load(json_file)
         hdf5_file = "cerebellum_300x_200z.hdf5"
         network_geom_file = self.data_path + "geom_" + hdf5_file
@@ -33,36 +31,6 @@ class TestEBCC:
         self.between_start = self.net_config["devices"]["CS"]["parameters"][
             "between_start"
         ]
-        from datetime import datetime
-
-        # Generate datetime string for the README
-        current_datetime = datetime.now().strftime("%Y-%m-%d")
-
-        # Define the README content
-        readme_content = f"""# Simulation Parameters
-
-                        Date: {current_datetime}
-
-                        ## Parameters
-                        - self.n_trials: {self.net_config["devices"]["CS"]["parameters"]["n_trials"]}
-                        - CS_rate: {self.net_config["devices"]["CS"]["parameters"]["rate"]}
-                        - US_rate: {self.net_config["devices"]["US"]["parameters"]["rate"]}
-                        - noise_rate:{self.net_config["devices"]["background_noise"]["parameters"]["rate"]}
-                        - A_minus: {self.net_config["connection_models"]["parallel_fiber_to_purkinje"]["parameters"]["A_minus"]}
-                        - A_plus: {self.net_config["connection_models"]["parallel_fiber_to_purkinje"]["parameters"]["A_plus"]}
-                        - Wmin: {self.net_config["connection_models"]["parallel_fiber_to_purkinje"]["parameters"]["Wmin"]}
-                        - Wmax: {self.net_config["connection_models"]["parallel_fiber_to_purkinje"]["parameters"]["Wmax"]}
-                        - CS_radius: {self.net_config["devices"]["CS"]["radius"]}
-
-                        ## Description
-                        {self.simulation_description}
-                        {vt_modality}
-                        io and vt connected: {connect_vt_to_io}
-                        """
-
-        # Write the README content to a file
-        with open("./aa_sim_description.md", "w") as readme_file:
-            readme_file.write(readme_content)
 
     def set_nest_kernel(self) -> None:
         nest.Install("cerebmodule")
@@ -112,54 +80,16 @@ class TestEBCC:
             self.vt = nest.Create("volume_transmitter_alberto", self.num_syn)
             self.connectivity["parallel_fiber_to_purkinje"]["id_vt"] = self.vt
         else:
-            return
+            print("vt_modality must be either <1_vt_PC> or <1_vt_pf-PC>")
+        return
 
-    def connect_network_all_static_syn(self) -> None:
+    def connect_network_plastic_syn(
+        self, vt_modality, A_minus: float = None, A_plus: float = None
+    ) -> None:
         connection_models = list(self.net_config["connection_models"].keys())
-
-        for conn_model in connection_models:
-            pre = self.net_config["connection_models"][conn_model]["pre"]
-            post = self.net_config["connection_models"][conn_model]["post"]
-            print("Connecting ", pre, " to ", post, "(", conn_model, ")")
-            if conn_model == "mossy_to_glomerulus":
-                syn_param = {
-                    "model": "static_synapse",
-                    "weight": self.net_config["connection_models"][conn_model][
-                        "weight"
-                    ],
-                    "delay": self.net_config["connection_models"][conn_model]["delay"],
-                }
-                id_pre = self.connectivity[conn_model]["id_pre"]
-                id_post = self.connectivity[conn_model]["id_post"]
-                nest.Connect(
-                    id_pre,
-                    id_post,
-                    {"rule": "one_to_one"},
-                    syn_param,
-                )
-            else:
-                syn_param = {
-                    "model": "static_synapse",
-                    "weight": self.net_config["connection_models"][conn_model][
-                        "weight"
-                    ],
-                    "delay": self.net_config["connection_models"][conn_model]["delay"],
-                    "receptor_type": self.net_config["cell_types"][post]["receptors"][
-                        pre
-                    ],
-                }
-                id_pre = self.connectivity[conn_model]["id_pre"]
-                id_post = self.connectivity[conn_model]["id_post"]
-                nest.Connect(
-                    id_pre,
-                    id_post,
-                    {"rule": "one_to_one"},
-                    syn_param,
-                )
-
-    def connect_network_plastic_syn(self, vt_modality) -> None:
-        connection_models = list(self.net_config["connection_models"].keys())
-
+        A_minus = A_minus or self.net_config["connection_models"]["parallel_fiber_to_purkinje"]["parameters"]["A_minus"]        
+        A_plus =  A_plus or self.net_config["connection_models"]["parallel_fiber_to_purkinje"]["parameters"]["A_plus"]
+        
         for conn_model in connection_models:
             pre = self.net_config["connection_models"][conn_model]["pre"]
             post = self.net_config["connection_models"][conn_model]["post"]
@@ -185,12 +115,8 @@ class TestEBCC:
                             "synapse_model"
                         ],
                         {
-                            "A_minus": self.net_config["connection_models"][conn_model][
-                                "parameters"
-                            ]["A_minus"],
-                            "A_plus": self.net_config["connection_models"][conn_model][
-                                "parameters"
-                            ]["A_plus"],
+                            "A_minus": A_minus,
+                            "A_plus": A_plus,
                             "Wmin": self.net_config["connection_models"][conn_model][
                                 "parameters"
                             ]["Wmin"],
@@ -221,7 +147,7 @@ class TestEBCC:
                         self.neuronal_populations["purkinje_cell"]["cell_ids"]
                     ):
                         syn_param["vt_num"] = float(n)
-                        syn_param["meta_l"] = 0.0
+                        syn_param["meta_l"] = 1.0
                         indexes = np.where(ids_PC_post == id_PC)[0]
                         pre_neurons = np.array(ids_GrC_pre)[indexes]
                         post_neurons = np.array(ids_PC_post)[indexes]
@@ -255,12 +181,8 @@ class TestEBCC:
                             "synapse_model"
                         ],
                         {
-                            "A_minus": self.net_config["connection_models"][conn_model][
-                                "parameters"
-                            ]["A_minus"],
-                            "A_plus": self.net_config["connection_models"][conn_model][
-                                "parameters"
-                            ]["A_plus"],
+                            "A_minus": A_minus,
+                            "A_plus": A_plus,
                             "Wmin": self.net_config["connection_models"][conn_model][
                                 "parameters"
                             ]["Wmin"],
@@ -318,9 +240,6 @@ class TestEBCC:
                     io_ids = self.connectivity["io_to_vt"]["id_pre"]
                     vt_ids = self.connectivity["io_to_vt"]["id_post"]
                     nest.Connect(io_ids, vt_ids, {"rule": "one_to_one"}, syn_param)
-                    
-                else:
-                    print("vt_modality must be either <1_vt_PC> or <1_vt_pf-PC>")
 
             elif conn_model == "mossy_to_glomerulus":
                 syn_param = {
@@ -361,8 +280,6 @@ class TestEBCC:
     def stimulus_geometry(self, plot) -> None:
         import plotly.graph_objects as go
 
-        with open("demo_cerebellum.json", "r") as read_file:
-            self.net_config = json.load(read_file)
         pc_color = self.net_config["cell_types"]["purkinje_cell"]["color"][0]
         grc_color = self.net_config["cell_types"]["granule_cell"]["color"][0]
         nos_color = "#82B366"
@@ -432,7 +349,7 @@ class TestEBCC:
                     y=ypos_stim,
                     z=zpos_stim,
                     mode="markers",
-                    marker=dict(size=2, color="red"),
+                    marker=dict(size=2, color=grc_color),
                 )
             )
 
@@ -446,7 +363,7 @@ class TestEBCC:
                     y=ypos,
                     z=zpos,
                     mode="markers",
-                    marker=dict(size=6, color="black"),
+                    marker=dict(size=6, color=pc_color),
                 )
             )
             fig.show()
@@ -507,8 +424,9 @@ class TestEBCC:
             self.net_config["devices"]["US"]["synapse"],
         )
 
-    def define_bg_noise(self) -> None:
+    def define_bg_noise(self, rate: float = None) -> None:
         print("background noise")
+
         noise_device = nest.Create(
             self.net_config["devices"]["background_noise"]["device"], 1
         )
@@ -517,12 +435,13 @@ class TestEBCC:
             self.neuronal_populations["glomerulus"]["cell_ids"],
             "all_to_all",
         )
+        rate = (
+            rate or self.net_config["devices"]["background_noise"]["parameters"]["rate"]
+        )
         nest.SetStatus(
             noise_device,
             params={
-                "rate": self.net_config["devices"]["background_noise"]["parameters"][
-                    "rate"
-                ],
+                "rate": rate,
                 "start": self.net_config["devices"]["background_noise"]["parameters"][
                     "start"
                 ],
@@ -619,7 +538,7 @@ class TestEBCC:
     def simulate_network_with_NO(self, nods_sim) -> None:
         print("simulate with NO")
         print("Single trial length: ", self.between_start)
-        with open('pfs-PC.pkl', 'rb') as file:
+        with open(self.data_path + "pfs-PC.pkl", "rb") as file:
             pfs = pickle.load(file)
         processed = 0
 
@@ -724,58 +643,3 @@ class TestEBCC:
         plt.xlabel("Time [ms]")
         plt.ylabel("Neuron ID")
         fig.savefig(f"aa_raster_{cell}.png")
-
-
-if __name__ == "__main__":
-
-    data_path = "./data/"
-    simulation_description = "complete EBCC with NO"
-    vt_modality = "1_vt_pf-PC"
-    connect_vt_to_io = True
-    plastic_pf_PC = True
-    print(vt_modality)
-    simulation = TestEBCC(
-        data_path=data_path, simulation_description=simulation_description
-    )
-
-    simulation.set_network_configuration(
-        vt_modality=vt_modality, connect_vt_to_io=connect_vt_to_io
-    )
-    simulation.set_nest_kernel()
-    simulation.create_network()
-    simulation.create_vt(vt_modality=vt_modality)
-    if plastic_pf_PC:
-        simulation.connect_network_plastic_syn(vt_modality=vt_modality)
-    else:
-        simulation.connect_network_all_static_syn()
-
-    simulation.stimulus_geometry(plot=False)
-    simulation.define_CS_stimuli()
-    simulation.define_US_stimuli()
-    simulation.define_bg_noise()
-    simulation.define_recorders()
-    #simulation.simulate_network()
-    nods_sim = simulation.initialize_nods()
-    simulation.simulate_network_with_NO(nods_sim) 
-
-    step = 5
-    for cell in ["pc_spikes", "stellate_spikes", "granule_spikes"]:
-        simulation.plot_cell_activity_over_trials(cell=cell, step=step)
-        simulation.plot_cell_raster(cell=cell)
-
-    source_folder = "./"
-    destination_folder = "./results"
-    file_prefixes = [
-        "glom_spikes",
-        "pc_spikes",
-        "io_spikes",
-        "golgi_spikes",
-        "basket_spikes",
-        "stellate_spikes",
-        "granule_spikes",
-        "pf-PC",
-        "aa_",
-    ]
-    from move_files import move_files_to_folder
-
-    move_files_to_folder(source_folder, destination_folder, file_prefixes)

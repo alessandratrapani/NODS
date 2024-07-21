@@ -1,6 +1,9 @@
 # %%-------------------------------------------IMPORT-----------------------------
 import json
-from nods.utils import *
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from utils import *
 
 # **************CONFIG*****************
 with open("./demo_cerebellum.json", "r") as json_file:

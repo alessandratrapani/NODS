@@ -28,7 +28,7 @@ nest.set_verbosity("M_ERROR")  # reduce plotted info
 # **************NODS********************
 sys.path.insert(1, "./nods/")
 from nods.core import NODS
-from nods.utils import *
+from utils import *
 from nods.plot import plot_cell_activity
 
 params_filename = "model_parameters.json"
