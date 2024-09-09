@@ -117,8 +117,48 @@ def US_pattern(PG_error, error_rate, start_US, stop_US):
 def sig(x, A=2, B=170, C=5):
     return A / (1 + np.exp(-(x - B) / C))
 
+def new_get_spike_activity(cell_name, path=""):
+    pthDat = path if path else "./"
+    all_data = []
+
+    for f in os.listdir(pthDat):
+        file_path = os.path.join(pthDat, f)
+        if f.startswith(cell_name) and os.path.isfile(file_path):
+            # Read the entire file into a NumPy array
+            data = np.loadtxt(file_path, delimiter="\t")
+            all_data.append(data)
+
+    if all_data:
+        neurons_activity = np.vstack(all_data)
+        return neurons_activity
+    else:
+        return np.array([])  # Return an empty array if no data is found
 
 def get_spike_activity(cell_name, path=""):
+    pthDat = path if path else "./"
+    ID_cell, time_cell = [], []
+
+    for f in os.listdir(pthDat):
+        file_path = os.path.join(pthDat, f)
+        if f.startswith(cell_name) and os.path.isfile(file_path):
+            # Read the file in one go
+            data = np.genfromtxt(file_path, delimiter="\t")
+            if data.size == 0:
+                continue  # Skip empty files
+            if data.ndim == 1:  # Handle single line files
+                data = np.expand_dims(data, axis=0)
+            ID_cell.extend(data[:, 0])
+            time_cell.extend(data[:, 1])
+
+    # Convert lists to NumPy arrays
+    ID_cell = np.array(ID_cell)
+    time_cell = np.array(time_cell)
+
+    # Stack the ID and time arrays and return the transpose
+    neurons_activity = np.stack((ID_cell, time_cell), axis=1)
+    return neurons_activity
+
+def old_get_spike_activity(cell_name, path=""):
 
     # print('Reading:',cell_name)
     if path == "":
@@ -177,3 +217,52 @@ def get_weights_values(nest, weights_recorder):
         dic_list = dic_list + [dic]
 
     return dic_list
+
+def count_spikes_across_trials(spike_data, n_trials, trial_duration, interval):
+    """
+    Function to count spikes in specified intervals across multiple trials."""
+
+    spike_counts = []
+
+    for trial in range(n_trials):
+        trial_start = trial * trial_duration
+        trial_end = trial_start + trial_duration
+        trial_spikes = spike_data[(spike_data[:, 1] >= trial_start) & (spike_data[:, 1] < trial_end)]
+        interval_start = trial_start + interval[0]
+        interval_end = trial_start + interval[1]
+        
+        count = np.sum((trial_spikes[:, 1] >= interval_start) & (trial_spikes[:, 1] < interval_end))
+        spike_counts.append(count)
+    
+    return spike_counts
+
+def save_no_conc_hdf5(no_conc):
+    
+    data = {
+        'ev_points_id': no_conc[0],
+        't': no_conc[1],
+        'NO_concentration': no_conc[2]
+    }
+    df_no_conc = pd.DataFrame(data)
+    chunk_size = 10_000_000
+    for i in range(0, len(df_no_conc), chunk_size):
+        chunk = df_no_conc.iloc[i:i + chunk_size]  
+        chunk.to_hdf('no_concentration_chunking.h5', key='NO_concentration', mode='a', append=True, complevel=9, complib='blosc')
+
+    print("Data saved in chunks!")
+    return
+   
+def save_no_conc_time(ev_points_id, NO_concentration, t):
+    
+    output_folder = "NO_concentration_data"
+    
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+        
+    file_name = f"NO_concentration_t_{t}.txt"
+    file_path = os.path.join(output_folder, file_name)
+    
+    with open(file_path, 'w') as f:
+        f.write(f"{ev_points_id} {NO_concentration}\n") 
+    
+    return

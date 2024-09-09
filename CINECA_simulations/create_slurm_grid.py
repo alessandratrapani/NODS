@@ -1,9 +1,10 @@
 import os
 import subprocess
+import time
 
-def create_slurm_script(noise, simulation, condition):
+def create_slurm_script(noise, simulation, condition, minus, plus):
     slurm_script_content = f"""#!/bin/bash
-#SBATCH --time=24:00:00
+#SBATCH --time=00:20:00
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=24
@@ -23,21 +24,20 @@ spack load py-cython@0.29.24%gcc@10.2.0 arch=linux-centos8-cascadelake
 source /g100_work/EIRI_E_POLIMI/no_paper/NO_env/bin/activate
 source /g100_work/EIRI_E_POLIMI/no_paper/nest-install/bin/nest_vars.sh
 
-cd $SCRATCH/results
+cd /g100_work/EIRI_E_POLIMI/no_paper/NODS/results/grid_search_new
 
-cd {condition}
+mkdir minus{int(minus)}_plus{int(plus)}
 
+cd minus{int(minus)}_plus{int(plus)}
 
-mkdir simulation_{noise}Hz_sim{simulation}
+mkdir sim{simulation}
 
-cd simulation_{noise}Hz_sim{simulation}
+cd sim{simulation}
 
-srun python /g100_work/EIRI_E_POLIMI/no_paper/NODS/grid_search_Aplus_Aminus/simulation.py {noise} {simulation} {condition}
+srun python /g100_work/EIRI_E_POLIMI/no_paper/NODS/grid_search_Aplus_Aminus/simulation_grid.py {noise} {simulation} {condition} {minus} {plus} 
 """
-
-#export SRUN_CPUS_PER_TASK=$SLURM_CPUS_PER_TASK
         
-    slurm_script_path = "run_simulation.slurm"
+    slurm_script_path = "run_simulation_grid.slurm"
     
     with open(slurm_script_path, "w") as slurm_file:
         slurm_file.write(slurm_script_content)
@@ -55,10 +55,16 @@ def submit_slurm_script(script_path):
 
 if __name__ == "__main__":
 
-    
-    noise = input("Enter noise: ")
-    simulation = input("Enter simulation: ")
-    condition = input("Enter NO condition: ")
+    noise = 0
+    num_simulation = int(input('Enter total number of simulation: '))
+    condition = "without_NO"
+    minus = [5]
+    plus = [4,3]
 
-    slurm_script_path = create_slurm_script(noise, simulation, condition)
-    submit_slurm_script(slurm_script_path)
+    for m in minus:
+        for p in plus:
+            for simulation in range(0,num_simulation):
+                slurm_script_path = create_slurm_script(noise, simulation, condition,m,p)
+                submit_slurm_script(slurm_script_path)
+            time.sleep(300)
+

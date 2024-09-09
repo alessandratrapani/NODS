@@ -1,17 +1,20 @@
 import os
 import subprocess
+import time
 
-def create_slurm_script(noise, simulation, condition):
+def create_slurm_script(noise, simulation, condition, minus, plus, perc_m, perc_p):
+    
+    minus_perc = minus + perc_m
+    plus_perc = plus + perc_p
+    
     slurm_script_content = f"""#!/bin/bash
-#SBATCH --time=24:00:00
+#SBATCH --time=00:20:00
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=24
 
 #SBATCH --partition=g100_usr_prod
 #SBATCH --account=EIRI_E_POLIMI
-#SBATCH --output="job-%j.log"
-#SBATCH --error="job-%j.log"
 
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 
@@ -27,17 +30,24 @@ cd $SCRATCH/results
 
 cd {condition}
 
+cd focus
 
-mkdir simulation_{noise}Hz_sim{simulation}
+mkdir minus{int(minus)}_plus{int(plus)}
 
-cd simulation_{noise}Hz_sim{simulation}
+cd minus{int(minus)}_plus{int(plus)}
 
-srun python /g100_work/EIRI_E_POLIMI/no_paper/NODS/grid_search_Aplus_Aminus/simulation.py {noise} {simulation} {condition}
+mkdir m_{int(perc_m*100)}_p_{int(perc_p*100)}
+
+cd m_{int(perc_m*100)}_p_{int(perc_p*100)}
+
+mkdir sim{simulation}
+
+cd sim{simulation}
+
+srun python /g100_work/EIRI_E_POLIMI/no_paper/NODS/grid_search_Aplus_Aminus/simulation_grid.py {noise} {simulation} {condition} {minus_perc} {plus_perc} 
 """
-
-#export SRUN_CPUS_PER_TASK=$SLURM_CPUS_PER_TASK
         
-    slurm_script_path = "run_simulation.slurm"
+    slurm_script_path = "run_simulation_focus.slurm"
     
     with open(slurm_script_path, "w") as slurm_file:
         slurm_file.write(slurm_script_content)
@@ -55,10 +65,17 @@ def submit_slurm_script(script_path):
 
 if __name__ == "__main__":
 
-    
-    noise = input("Enter noise: ")
-    simulation = input("Enter simulation: ")
-    condition = input("Enter NO condition: ")
-
-    slurm_script_path = create_slurm_script(noise, simulation, condition)
-    submit_slurm_script(slurm_script_path)
+    noise = 0
+    num_simulation = int(input('Enter total number of simulation: '))
+    condition = "without_NO"
+    m = int(input('Enter Min: '))
+    p = int(input('Enter Plus: '))
+    add_m = [0]
+    add_p = [0]
+  
+    for i, perc_m in enumerate(add_m):
+        for j, perc_p in enumerate(add_p):
+            for simulation in range(0,num_simulation):
+                slurm_script_path = create_slurm_script(noise, simulation, condition,m,p,perc_m, perc_p)
+                submit_slurm_script(slurm_script_path)
+            time.sleep(600)

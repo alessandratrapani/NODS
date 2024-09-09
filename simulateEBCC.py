@@ -18,10 +18,14 @@ class SimulateEBCC:
             self.params = json.load(read_file)
         pass
 
-    def set_network_configuration(self) -> None:
+    def set_network_configuration(self, test) -> None:
         """configure network geometry, self.connectivity, and models"""
-        with open("/g100_work/EIRI_E_POLIMI/no_plasticity/NODS/network_configuration.json", "r") as json_file:
-            self.net_config = json.load(json_file)
+        if test:
+            with open("/g100_work/EIRI_E_POLIMI/no_paper/NODS/network_configuration_test.json", "r") as json_file:
+                self.net_config = json.load(json_file) 
+        if test == False:
+            with open("/g100_work/EIRI_E_POLIMI/no_paper/NODS/network_configuration.json", "r") as json_file:
+                self.net_config = json.load(json_file)
         hdf5_file = "cerebellum_300x_200z.hdf5"
         network_geom_file = self.data_path + "geom_" + hdf5_file
         network_connectivity_file = self.data_path + "conn_" + hdf5_file
@@ -35,7 +39,7 @@ class SimulateEBCC:
     def set_nest_kernel(self) -> None:
         #nest.Install("cerebmodule")
         RESOLUTION = 1.0
-        CORES = 48
+        CORES = 24
         nest.ResetKernel()
 
         msd = 1000  # master seed
@@ -107,7 +111,7 @@ class SimulateEBCC:
                     "senders": self.neuronal_populations[pre]["cell_ids"],
                     "targets": self.neuronal_populations[post]["cell_ids"],
                 }
-                WeightPFPC = nest.Create("weight_recorder", params=recdict2)
+                #WeightPFPC = nest.Create("weight_recorder", params=recdict2)
 
                 if vt_modality == "1_vt_PC":
                     nest.SetDefaults(
@@ -124,7 +128,7 @@ class SimulateEBCC:
                                 "parameters"
                             ]["Wmax"],
                             "vt": self.vt[0],
-                            "weight_recorder": WeightPFPC[0],
+                            #"weight_recorder": WeightPFPC[0],
                         },
                     )
                     syn_param = {
@@ -190,7 +194,7 @@ class SimulateEBCC:
                                 "parameters"
                             ]["Wmax"],
                             "vt": self.vt[0],
-                            "weight_recorder": WeightPFPC[0],
+                            #"weight_recorder": WeightPFPC[0],
                         },
                     )
 
@@ -386,6 +390,7 @@ class SimulateEBCC:
         for sg in range(n_CS_device - 1):
             random_spikes = np.random.uniform(low=t0, high=tf, size=CS_n_spikes)
             CS_matrix_start = np.round(np.sort(random_spikes))
+            print(CS_matrix_start)
             CS_matrix = np.concatenate(
                 [CS_matrix_start + self.between_start * t for t in range(self.n_trials)]
             )
@@ -394,7 +399,7 @@ class SimulateEBCC:
             )
 
         nest.Connect(CS_device, self.id_map_mf.tolist(), "one_to_one")
-
+        
     def define_US_stimuli(self) -> None:
         print("US stimulus")
         US_burst_dur = self.net_config["devices"]["US"]["parameters"]["burst_dur"]
@@ -435,9 +440,10 @@ class SimulateEBCC:
             self.neuronal_populations["glomerulus"]["cell_ids"],
             "all_to_all",
         )
-        rate = (
-            rate or self.net_config["devices"]["background_noise"]["parameters"]["rate"]
-        )
+        if rate != 0:
+            rate = (
+                rate or self.net_config["devices"]["background_noise"]["parameters"]["rate"]
+            )
         nest.SetStatus(
             noise_device,
             params={
@@ -536,6 +542,45 @@ class SimulateEBCC:
             print("Time: ", t)
 
     def simulate_network_with_NO(self, nods_sim) -> None:
+        
+        print("simulate with NO")
+        print("Single trial length: ", self.between_start)
+
+        # Load data once
+        with open(self.data_path + "pfs-PC.pkl", "rb") as file:
+            pfs = pickle.load(file)
+
+        n_trials = self.n_trials
+        between_start = self.between_start
+        NO_in_ev_points = nods_sim.NO_in_ev_points
+
+        def process_trial(t):
+            # Simulate for a trial
+            nest.Simulate(1.0)
+            time.sleep(0.01)  # Adjust this if needed
+
+            # Get active sources
+            ID_cell = nest.GetStatus(self.spikedetector_granule_cell, "events")[0]["senders"]
+            active_sources = ID_cell[processed[0]:]
+            processed[0] += len(active_sources)
+
+            # Evaluate diffusion
+            nods_sim.evaluate_diffusion(active_sources, t)
+
+            # Prepare data for updating status
+            list_dict = [
+                {"meta_l": float(sig(x=NO_in_ev_points[i], A=1, B=130))}
+                for i in range(len(pfs))
+            ]
+
+            nest.SetStatus(pfs, list_dict)
+
+        # Process trials
+        processed = [0]  # Use a list to pass by reference
+        for t in range(n_trials * between_start):
+            process_trial(t)
+
+        """
         print("simulate with NO")
         print("Single trial length: ", self.between_start)
         with open(self.data_path + "pfs-PC.pkl", "rb") as file:
@@ -557,7 +602,9 @@ class SimulateEBCC:
                     {"meta_l": float(sig(x=nods_sim.NO_in_ev_points[i], A=1, B=130))}
                 )
             nest.SetStatus(pfs, list_dict)
-
+        """
+        return nods_sim.NO_conc_update
+    
     def plot_cell_activity_over_trials(self, cell, step):
         import matplotlib.pyplot as plt
         import seaborn as sns
@@ -643,3 +690,38 @@ class SimulateEBCC:
         plt.xlabel("Time [ms]")
         plt.ylabel("Neuron ID")
         fig.savefig(f"aa_raster_{cell}.png")
+
+    def save_sdf_mean(self, cell, step):
+
+        import pandas as pd
+        
+        CS_burst_dur = self.net_config["devices"]["CS"]["parameters"]["burst_dur"]
+        CS_start_first = float(self.net_config["devices"]["CS"]["parameters"]["start_first"])
+        US_start_first = self.net_config["devices"]["US"]["parameters"]["start_first"]
+
+        sdf_mean_over_trials = []
+        sdf_baseline = np.zeros((self.n_trials))
+        sdf_cr = np.zeros((self.n_trials))
+        
+        spk = get_spike_activity(cell)
+        
+        for trial in range(self.n_trials):
+
+            start = trial * self.between_start
+            stop = CS_start_first + CS_burst_dur + trial * self.between_start
+            
+            
+            sdf_cells = sdf(start=start, stop=stop, spk=spk, step=5)
+            sdf_mean_trial = sdf_mean(sdf_cells)
+            sdf_mean_over_trials.append(sdf_mean_trial)
+            sdf_baseline[trial] = np.mean(sdf_mean_trial[150:200])
+            sdf_cr[trial] = np.mean(sdf_mean_trial[250:300])
+        
+        df_sdf_mean_over_trials = pd.DataFrame(sdf_mean_over_trials)
+        df_sdf_baseline = pd.DataFrame(sdf_baseline)
+        df_sdf_cr = pd.DataFrame(sdf_cr)
+        
+        df_sdf_grid = pd.concat([df_sdf_baseline,df_sdf_cr], axis = 1)
+        
+        df_sdf_mean_over_trials.to_csv('sdf_mean_over_trials.csv', index = False)
+        df_sdf_grid.to_csv('sdf_grif.csv', index = False)
