@@ -43,7 +43,7 @@ print(simulation_description)
 if condition == "with_NO":
     vt_modality = "1_vt_pf-PC" 
     simulation = SimulateEBCC(data_path=data_path)
-    simulation.set_network_configuration(test = True)
+    simulation.set_network_configuration(test = False)
     simulation.set_nest_kernel()
     simulation.create_network()
     simulation.create_vt(vt_modality=vt_modality)

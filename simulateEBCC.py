@@ -556,14 +556,17 @@ class SimulateEBCC:
 
         def process_trial(t):
             # Simulate for a trial
-            nest.Simulate(1.0)
+            nest.Simulate(2.0)
             time.sleep(0.01)  # Adjust this if needed
 
             # Get active sources
-            ID_cell = nest.GetStatus(self.spikedetector_granule_cell, "events")[0]["senders"]
+            """ID_cell = nest.GetStatus(self.spikedetector_granule_cell, "events")[0]["senders"]
             active_sources = ID_cell[processed[0]:]
-            processed[0] += len(active_sources)
+            processed[0] += len(active_sources)"""
 
+            activity_presynn = get_spike_activity('granule_spikes')
+            ind_active_sources = np.where((activity_presynn[:,1]>=(t-1)) & (activity_presynn[:,1]<=t))[0]
+            active_sources = activity_presynn[ind_active_sources,0]
             # Evaluate diffusion
             nods_sim.evaluate_diffusion(active_sources, t)
 
@@ -577,7 +580,7 @@ class SimulateEBCC:
 
         # Process trials
         processed = [0]  # Use a list to pass by reference
-        for t in range(n_trials * between_start):
+        for t in range(0,n_trials * between_start,2):
             process_trial(t)
 
         """

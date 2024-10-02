@@ -262,7 +262,7 @@ def save_no_conc_time(ev_points_id, NO_concentration, t):
     file_name = f"NO_concentration_t_{t}.txt"
     file_path = os.path.join(output_folder, file_name)
     
-    with open(file_path, 'w') as f:
+    with open(file_path, 'a') as f:
         f.write(f"{ev_points_id} {NO_concentration}\n") 
     
     return

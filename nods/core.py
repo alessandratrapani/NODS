@@ -26,14 +26,14 @@ class NODS:
         r_2    = self.distances**2
         self.Green_LUT = np.zeros((len(self.distances),2))
         self.Green_LUT[:, 0] = Green_function(0, r_2, self.D, self.I)
-        self.Green_LUT[:, 1] = Green_function(1, r_2, self.D, self.I)
+        self.Green_LUT[:, 1] = Green_function(2, r_2, self.D, self.I)
 
-        self.dt         = model_parameters['simulation']['dt']
+        #self.dt         = model_parameters['simulation']['dt']
+        self.dt = 2 
         self.time       = np.arange(model_parameters['simulation']['t_start'], model_parameters['simulation']['t_end'], self.dt)
         self.Calm2C_0   = model_parameters['simulation']['Calm2C_0']
         self.nNOS_0     = model_parameters['simulation']['nNOS_0']
         self.NO_p_0     = model_parameters['simulation']['NO_p_0']
-        self.NO_conc_update = [[], [], []]
 
     def init_geometry(self, nNOS_coordinates, ev_point_coordinates, source_ids, nos_ids = None, cluster_nos_ids=None, ev_point_ids = None, cluster_ev_point_ids=None, file_ev_points = None, file_nNOS = None):
 
@@ -97,7 +97,6 @@ class NODS:
                                 self.relative_dist.append([int(source_id), int(nos_id), int(evpoint_id), d, int(cluster)]) # 0: id_source, 1: id_nos, 2:id_evpoint, 3: relative_distance"""
         # elimination repetition of same source
         self.source_to_eval = np.unique(self.source_to_eval)
-        print(len(ev_points), flush = True)
         return
     
     def init_simulation(self,simulation_file, number_of_evaluation_points, store_sim=True):
@@ -137,18 +136,12 @@ class NODS:
         r_max = self.r_max
         ds = self.ds
         NO_in_ev_points = self.NO_in_ev_points
-        output_folder = "NO_concentration_data"
-        if not os.path.exists(output_folder):
-                os.makedirs(output_folder)
-
-        file_name = f"NO_concentration_t_{t}.txt"
-        file_path = os.path.join(output_folder, file_name)
-        
+  
         for source_id in source_to_eval:
             spike = 1 if source_id in active_sources else 0
 
             source = source_data[source_id]
-            Calm2C, nNOS, NO_produced_t1 = Production_function(dt, spike, source['Calm2C'], source['nNOS'], tauCa, tauNOS1, tauNOS2, A)
+            nNOS, Calm2C, NO_produced_t1 = Production_function(dt, spike, source['Calm2C'], source['nNOS'], tauCa, tauNOS1, tauNOS2, A)
             u, NO = Diffusion_function(dt, source['u'], Green_LUT, source['NO_produced_t0'], NO_produced_t1, B)
 
             source['Calm2C'] = Calm2C
@@ -167,53 +160,8 @@ class NODS:
             NO_in_ev_points[ev_points_id] += NO_contribution
             
             #save_no_conc_time(ev_points_id, NO_in_ev_points[ev_points_id], int(t)
-
-            with open(file_path, 'w') as f:
-                f.write(f"{ev_points_id} {NO_in_ev_points[ev_points_id]}\n") 
-        f.close()
-    
-    """
-    def evaluate_diffusion(self, active_sources, t):
-        source_data = self.NO_from_source
-        source_to_eval = self.source_to_eval
-        dt = self.dt
-        tauCa = self.tauCa
-        tauNOS1 = self.tauNOS1
-        tauNOS2 = self.tauNOS2
-        A = self.A
-        B = self.B
-        Green_LUT = self.Green_LUT
-        r_max = self.r_max
-        ds = self.ds
-        NO_in_ev_points = self.NO_in_ev_points
-
-       # Step 1: Parallel processing of the sources
-        with multiprocessing.Pool() as pool:
-            updated_sources = pool.starmap(
-                process_source, 
-                [(source_id, active_sources, source_data, dt, tauCa, tauNOS1, tauNOS2, A, B, Green_LUT) 
-                 for source_id in source_to_eval],
-                chunksize=100
-            )
-
-        # Update the source_data with the processed results
-        for source_id, updated_source in updated_sources:
-            source_data[source_id] = updated_source
-
-        # Step 2: Parallel processing of the contributions
-        with multiprocessing.Pool() as pool:
-            contributions = pool.starmap(
-                process_contribution, 
-                [(row, source_data, r_max, ds) for row in self.relative_dist],
-                chunksize=100
-            )
-
-        # Aggregate NO contributions into NO_in_ev_points
-        for ev_points_id, NO_contribution in contributions:
-            NO_in_ev_points[ev_points_id] += NO_contribution
-
-        return
-        #"""
+                              
+        return 
     def old_evaluate_diffusion(self,active_sources,t):
      
         for source_id in self.source_to_eval:

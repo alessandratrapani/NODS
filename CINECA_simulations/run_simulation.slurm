@@ -24,8 +24,8 @@ cd $SCRATCH/results
 cd with_NO
 
 
-mkdir simulation_0Hz_sim0
+mkdir simulation_0Hz_sim10
 
-cd simulation_0Hz_sim0
+cd simulation_0Hz_sim10
 
-srun python /g100_work/EIRI_E_POLIMI/no_paper/NODS/grid_search_Aplus_Aminus/simulation.py 0 0 with_NO
+srun python /g100_work/EIRI_E_POLIMI/no_paper/NODS/grid_search_Aplus_Aminus/simulation.py 0 10 with_NO
