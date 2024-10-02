@@ -435,8 +435,9 @@ class SimulateEBCC:
             self.neuronal_populations["glomerulus"]["cell_ids"],
             "all_to_all",
         )
-        rate = (
-            rate or self.net_config["devices"]["background_noise"]["parameters"]["rate"]
+        if rate != 0:
+            rate = (
+                rate or self.net_config["devices"]["background_noise"]["parameters"]["rate"]
         )
         nest.SetStatus(
             noise_device,
@@ -512,9 +513,7 @@ class SimulateEBCC:
             ev_point_coordinates=nNOS_coordinates,
             source_ids=self.connectivity["parallel_fiber_to_purkinje"]["id_pre"],
             nos_ids=self.vt,
-            cluster_ev_point_ids=self.connectivity["parallel_fiber_to_purkinje"][
-                "id_post"
-            ],
+            cluster_ev_point_ids=self.connectivity["parallel_fiber_to_purkinje"]["id_post"],
             cluster_nos_ids=self.connectivity["parallel_fiber_to_purkinje"]["id_post"],
         )
         nods_sim.time = np.arange(0, self.between_start * self.n_trials, 1.0)
@@ -542,14 +541,37 @@ class SimulateEBCC:
             pfs = pickle.load(file)
         processed = 0
 
-        for t in range(self.n_trials * self.between_start):
-            nest.Simulate(1.0)
+        for t in range(0,self.n_trials * self.between_start,2):
+            nest.Simulate(2.0)
             time.sleep(0.01)
+            """
             ID_cell = nest.GetStatus(self.spikedetector_granule_cell, "events")[0][
                 "senders"
             ]
             active_sources = ID_cell[processed:]
             processed += len(active_sources)
+            
+            """
+            activity_presynn = get_spike_activity('granule_spikes')
+
+            ind_active_sources = np.where((activity_presynn[:,1]>=(t-1)) & (activity_presynn[:,1]<=t))[0]
+
+            active_sources = activity_presynn[ind_active_sources,0]
+            #"""
+            """
+            activity_from_progress_presynn = activity_presynn[processed:,:]
+            processed += len(activity_from_progress_presynn) 
+            #active_sources = activity_from_progress_presynn[:,0]
+            
+            output_folder = "/home/nomodel/code/NODS/results/NO_concentration_data_test/"
+            if not os.path.exists(output_folder):
+                os.makedirs(output_folder)
+            prog_synn_name = f"presynn_{t}"
+            prog_synn_path = os.path.join(output_folder, prog_synn_name)
+            df_prog_synn = pd.DataFrame(activity_presynn[ind_active_sources])
+            df_prog_synn.to_csv(prog_synn_path, header=False)
+            #"""
+
             nods_sim.evaluate_diffusion(active_sources, t)
             list_dict = []
             for i in range(len(pfs)):

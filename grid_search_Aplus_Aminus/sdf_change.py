@@ -7,7 +7,6 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-import os
 
 rooth_path = "/home/nomodel/code/NODS/results/grid_search/"
 
@@ -27,7 +26,7 @@ with_NO_color = net_config["devices"]["nNOS"]["color"][0]
 without_NO_color = "#000000"
 cell = "pc_spikes"
 
-noise_rate = [8]
+noise_rate = [0,4,8]
 colors = [without_NO_color, with_NO_color, without_NO_color, with_NO_color]
 
 for i,noise in enumerate(noise_rate):
@@ -39,7 +38,7 @@ for i,noise in enumerate(noise_rate):
     sdf_mean_trials_simulations_NO = []
 
     for k in range(0,10):
-        results_path = rooth_path + f"{noise}Hz/min4_plus8/{k}/"
+        results_path = rooth_path + f"{noise}Hz/{k}/"
         spk = get_spike_activity(cell_name=cell, path=results_path)
 
         results_path_NO = rooth_path + f"grid_NO/{noise}Hz/{k}/"
@@ -111,5 +110,5 @@ for i,noise in enumerate(noise_rate):
     #plt.show()
     plt.tight_layout()
     #fig.suptitle("SDF change over trials", fontsize=16)
-    fig.savefig(rooth_path+f"sdf_change_{noise}Hz.png")
+    fig.savefig(rooth_path+f"sdf_change_{noise}Hz_30.png")
 # %%

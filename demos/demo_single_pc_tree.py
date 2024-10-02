@@ -438,17 +438,18 @@ for trial in range(n_trial):
             ID_cell = nest.GetStatus(spikedetector_GR, "events")[0]["senders"]
             active_sources = ID_cell[processed:]
             processed += len(active_sources)
-            sim.evaluate_diffusion(active_sources, t)
-            list_dict = []
-            for i in range(len(pfs)):
-                list_dict.append(
-                    {
-                        "meta_l": float(
-                            sig(x=sim.NO_in_ev_points[t, i], A=1, B=NO_threshold)
-                        )
-                    }
-                )
-            nest.SetStatus(pfs, list_dict)
+            if t % 2:
+                sim.evaluate_diffusion(active_sources, t)
+                list_dict = []
+                for i in range(len(pfs)):
+                    list_dict.append(
+                        {
+                            "meta_l": float(
+                                sig(x=sim.NO_in_ev_points[t, i], A=1, B=NO_threshold)
+                            )
+                        }
+                    )
+                nest.SetStatus(pfs, list_dict)
 t = time.time() - t0
 print("time {}".format(t))
 

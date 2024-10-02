@@ -45,14 +45,14 @@ for i,noise in enumerate(noise_rate):
 
     sdf_mean_trials_simulations = []
     sdf_mean_trials_simulations_NO = []
-    sim_baseline = np.zeros(trial_taken*n_sim)
-    sim_cr = np.zeros(trial_taken*n_sim)
+    sim_baseline = np.zeros(trial_taken*(n_sim))
+    sim_cr = np.zeros(trial_taken*(n_sim))
 
-    sim_baseline_NO = np.zeros(trial_taken*n_sim)
-    sim_cr_NO = np.zeros(trial_taken*n_sim)
+    sim_baseline_NO = np.zeros(trial_taken*(n_sim))
+    sim_cr_NO = np.zeros(trial_taken*(n_sim))
 
     for k in range(0,n_sim):
-        results_path = rooth_path + f"{noise}Hz/min4_plus8/{k}/"
+        results_path = rooth_path + f"{noise}Hz/{k}/"
         spk = get_spike_activity(cell_name=cell, path=results_path)
 
         results_path_NO = rooth_path + f"grid_NO/{noise}Hz/{k}/"
@@ -110,11 +110,11 @@ for i,noise in enumerate(noise_rate):
         patch.set_facecolor(color)
     axs[i].axvline(3,linewidth=1, color='black')
     axs[i].set_xticks([])
-    axs[i].set_ylim(-30,0)
+    axs[i].set_ylim(-30,5)
     axs[i].set_title(f'CS: 40Hz, BkG noise: {noise}Hz')  
 
 plt.tight_layout()
 plt.show()
-fig.savefig(rooth_path + f"sdf_boxplots_stat_048.png")
+fig.savefig(rooth_path + f"sdf_boxplots_stat_048_30.png")
 #fig.savefig(f"sdf_boxplots_04.svg")
 # %%

@@ -11,12 +11,19 @@ import gc
 
 noise_rate = float(sys.argv[1])
 k = int(sys.argv[2])
+i = int(sys.argv[3])
+j = int(sys.argv[4])
+
+minus = [8, 7, 6, 5, 4, 3]
+plus = [9, 8, 7, 6, 5, 4]
 
 data_path = "./data/"
 condition = "with NO"
-folder_grid = f"grid_search/grid_NO"
-A_minus = -4*10**-4
-A_plus = 8*10**-5
+folder_grid = f"grid_search"
+#A_minus = -4*10**-4
+#A_plus = 8*10**-5
+A_minus = -minus[i]*10**(-4)
+A_plus = plus[j]*10**(-5)
 #noise_rate = 8.0
 source_folder = "./"
 destination_folder = "./results"
@@ -88,9 +95,10 @@ with open("./aa_sim_description.md", "w") as readme_file:
     readme_file.write(readme_content)
 readme_file.close()
 
-folder_sim = f'{int(noise_rate)}Hz'
+folder_sim = f'grid_NO/{noise_rate}Hz_50'
+
 move_folder = os.path.join(os.path.join(destination_folder, folder_sim), f'{k}')
-#os.makedirs(os.path.join(destination_folder, folder_sim), exist_ok=True)
+os.makedirs(os.path.join(destination_folder, folder_sim), exist_ok=True)
 from move_files import move_files_to_folder
 move_files_to_folder(source_folder, move_folder, file_prefixes)
 

@@ -8,7 +8,7 @@ import gc
 
 
 data_path = "./data/"
-condition = "with NO"
+condition = "without NO"
 folder_grid = f"grid_search/grid_NO"
 A_minus = -0.0004
 A_plus = 0.00008
@@ -33,7 +33,7 @@ nest.Install("cerebmodule")
 simulation_description = f"EBCC with A_minus, A_plus= {A_minus},{A_plus}, {condition}"
 print(simulation_description)
 
-
+#vt_modality = "1_vt_PC"
 vt_modality = "1_vt_pf-PC" 
 simulation = SimulateEBCC(data_path=data_path)
 simulation.set_network_configuration()
@@ -46,6 +46,7 @@ simulation.define_CS_stimuli()
 simulation.define_US_stimuli()
 simulation.define_bg_noise(rate=noise_rate)
 simulation.define_recorders()
+#simulation.simulate_network()
 nods_sim = simulation.initialize_nods()
 simulation.simulate_network_with_NO(nods_sim)
 
@@ -79,7 +80,7 @@ with open("./aa_sim_description.md", "w") as readme_file:
     readme_file.write(readme_content)
 readme_file.close()
 
-folder_sim = f'min4_plus8'
+folder_sim = f'test'
 move_folder = os.path.join(os.path.join(destination_folder, folder_sim))
 #os.makedirs(os.path.join(destination_folder, folder_sim), exist_ok=True)
 from move_files import move_files_to_folder
