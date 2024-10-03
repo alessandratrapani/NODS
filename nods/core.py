@@ -97,6 +97,8 @@ class NODS:
                                 self.relative_dist.append([int(source_id), int(nos_id), int(evpoint_id), d, int(cluster)]) # 0: id_source, 1: id_nos, 2:id_evpoint, 3: relative_distance
         # elimination repetition of same source
         self.source_to_eval = np.unique(self.source_to_eval)
+        df_relative_dist = pd.DataFrame(self.relative_dist)
+        df_relative_dist.to_csv('relative_dist.csv',header=False)
 
         return
     
