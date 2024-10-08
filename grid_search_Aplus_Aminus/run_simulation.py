@@ -10,9 +10,10 @@ import gc
 data_path = "./data/"
 condition = "without NO"
 folder_grid = f"grid_search/grid_NO"
-A_minus = -0.0004
+file_rel_dist = os.path.join(data_path,'relative_dist.csv')
+A_minus = -0.0007
 A_plus = 0.00008
-noise_rate = 0.0
+noise_rate = 4.0
 source_folder = "./"
 destination_folder = "./results"
 file_prefixes = [
@@ -47,7 +48,7 @@ simulation.define_US_stimuli()
 simulation.define_bg_noise(rate=noise_rate)
 simulation.define_recorders()
 #simulation.simulate_network()
-nods_sim = simulation.initialize_nods()
+nods_sim = simulation.initialize_nods(file_rel_dist)
 simulation.simulate_network_with_NO(nods_sim)
 
 simulation.plot_cell_activity_over_trials(cell="pc_spikes", step=5)

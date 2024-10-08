@@ -31,7 +31,7 @@ class NODS:
         self.nNOS_0     = model_parameters['simulation']['nNOS_0']
         self.NO_p_0     = model_parameters['simulation']['NO_p_0']
 
-    def init_geometry(self, nNOS_coordinates, ev_point_coordinates, source_ids, nos_ids = None, cluster_nos_ids=None, ev_point_ids = None, cluster_ev_point_ids=None, file_ev_points = None, file_nNOS = None):
+    def init_geometry(self, nNOS_coordinates, ev_point_coordinates, source_ids, nos_ids = None, cluster_nos_ids=None, ev_point_ids = None, cluster_ev_point_ids=None, file_ev_points = None, file_nNOS = None, file_relative_dist = None):
 
         if file_ev_points is None:
             if ev_point_ids is None:
@@ -65,7 +65,7 @@ class NODS:
                                             cluster = self.cluster_nos_ids[index])                    
             #all_nNOS = pd.DataFrame({'source_id':source_ids, 'nos_id':nos_ids, 'x': nNOS_coordinates[:,0], 'y': nNOS_coordinates[:,1], 'z': nNOS_coordinates[:,2]})
         #TODO else: load da file
-        self.sort_sources(all_nNOS, ev_points)
+        self.sort_sources(all_nNOS, ev_points,file_relative_dist)
         self.no_conc = np.zeros(len(ev_point_ids))
         #df = pd.DataFrame(ev_points)
         #df.to_csv("/home/nomodel/code/NODS/results/NO_concentration_data/ev_points_dict.csv")
@@ -77,26 +77,32 @@ class NODS:
         self.source_to_eval = []
         cluster_ids = np.unique(self.cluster_nos_ids)
         # loop on cluster DA PARALLELIZZARE
-        
-        for cluster in [cluster_ids[0]]:
-            # loop on the receiver
-            for evpoint_id in ev_points:
-                # loop on the sources
-                if ev_points[evpoint_id]['cluster']==cluster:
-                    ev_point_coordinates = np.array([ev_points[evpoint_id]['x'],ev_points[evpoint_id]['y'],ev_points[evpoint_id]['z']])
-                    for nos_id in all_nNOS: 
-                        if all_nNOS[nos_id]['cluster']==cluster:
-                            nNOS_coordinates = np.array([all_nNOS[nos_id]['x'],all_nNOS[nos_id]['y'],all_nNOS[nos_id]['z']])                    
-                            # distance evaluation
-                            d = spatial.distance.euclidean(nNOS_coordinates, ev_point_coordinates)
-                            # check on relevant distance value
-                            if d < self.r_max:
-                                # lists update
-                                source_id = all_nNOS[nos_id]['source_id']
-                                self.source_to_eval.append(source_id)
-                                self.relative_dist.append([int(source_id), int(nos_id), int(evpoint_id), d, int(cluster)]) # 0: id_source, 1: id_nos, 2:id_evpoint, 3: relative_distance
+        if filename:
+            relative_dist = pd.read_csv(filename).values
+            self.relative_dist = relative_dist[:,1:]
+            self.source_to_eval = self.relative_dist[:,0]
+        else:
+            for cluster in cluster_ids:
+                # loop on the receiver
+                for evpoint_id in ev_points:
+                    # loop on the sources
+                    if ev_points[evpoint_id]['cluster']==cluster:
+                        ev_point_coordinates = np.array([ev_points[evpoint_id]['x'],ev_points[evpoint_id]['y'],ev_points[evpoint_id]['z']])
+                        for nos_id in all_nNOS: 
+                            if all_nNOS[nos_id]['cluster']==cluster:
+                                nNOS_coordinates = np.array([all_nNOS[nos_id]['x'],all_nNOS[nos_id]['y'],all_nNOS[nos_id]['z']])                    
+                                # distance evaluation
+                                d = spatial.distance.euclidean(nNOS_coordinates, ev_point_coordinates)
+                                # check on relevant distance value
+                                if d < self.r_max:
+                                    # lists update
+                                    source_id = all_nNOS[nos_id]['source_id']
+                                    self.source_to_eval.append(source_id)
+                                    self.relative_dist.append([int(source_id), int(nos_id), int(evpoint_id), d, int(cluster)]) # 0: id_source, 1: id_nos, 2:id_evpoint, 3: relative_distance
         # elimination repetition of same source
         self.source_to_eval = np.unique(self.source_to_eval)
+        df_relative_dist = pd.DataFrame(self.relative_dist)
+        df_relative_dist.to_csv('relative_dist.csv',header=False)
 
         return
     
@@ -112,7 +118,7 @@ class NODS:
                                                 )
             
         self.NO_in_ev_points = np.zeros((number_of_evaluation_points))
-        
+
         if store_sim:
             dill.dump(self, open(simulation_file, "wb"))
         return 
@@ -139,8 +145,8 @@ class NODS:
         ds = self.ds
         NO_in_ev_points = self.NO_in_ev_points
         #no_conc_to_file = self.no_conc
-        no_conc_to_file = []
-        output_folder = "/home/nomodel/code/NODS/results/NO_concentration_data_2ms/"
+
+        output_folder = "/home/nomodel/code/NODS/results/NO_concentration_data_test_5ms/"
         if not os.path.exists(output_folder):
                 os.makedirs(output_folder)
 
@@ -149,12 +155,6 @@ class NODS:
     
         for source_id in source_to_eval:
             spike = 1 if source_id in active_sources else 0
-
-            if (source_id == 3303) & (3303 in active_sources):
-                print(f'spike 3303, {t}')
-
-            if source_id == 3303:
-                time.sleep(0.01) 
 
             source = source_data[source_id]
             nNOS, Calm2C, NO_produced_t1 = Production_function(dt, spike, source['Calm2C'], source['nNOS'], tauCa, tauNOS1, tauNOS2, A)
@@ -165,25 +165,39 @@ class NODS:
             source['NO_produced_t0'] = NO_produced_t1
             source['u'] = u
             source['NO_diffused_tf'] = NO 
-        
 
-
-            no_conc_to_file.append([NO_produced_t1,source_id,nNOS,Calm2C])
-        df_no_conc = pd.DataFrame(no_conc_to_file)
-        df_no_conc.to_csv(file_path, header=False)
+        current_ev_points_id = int(self.relative_dist[0][2])
+        current_contribution_sum = 0
+        contributions_to_file = []
 
         for row in self.relative_dist:
             source_id, nos_id, ev_points_id, d, cluster = row
+            ev_points_id = int(ev_points_id)
+            # Set a minimum value for d
             if d < 0.2:
                 d = 0.2
 
             distance_index = round((d + r_max) / ds)
-            NO_contribution = source_data[source_id]['NO_diffused_tf'][distance_index]
-            NO_in_ev_points[ev_points_id] += NO_contribution
-            """
-            no_conc_to_file[ev_points_id] = NO_in_ev_points[ev_points_id]
+            NO_contribution = source_data[int(source_id)]['NO_diffused_tf'][distance_index]
+
+            if ev_points_id != current_ev_points_id:
+                
+                NO_in_ev_points[current_ev_points_id] = current_contribution_sum
+                contributions_to_file.append([current_ev_points_id, current_contribution_sum])
+
+                current_ev_points_id = ev_points_id
+                current_contribution_sum = 0
+
+            current_contribution_sum += NO_contribution
+
+        NO_in_ev_points[current_ev_points_id] = current_contribution_sum
+        contributions_to_file.append([current_ev_points_id, current_contribution_sum])
+            
+        df_no_conc = pd.DataFrame(contributions_to_file)
+        df_no_conc.to_csv(file_path,header=False)
+        """no_conc_to_file[ev_points_id] = NO_in_ev_points[ev_points_id]
         df_no_conc = pd.DataFrame(no_conc_to_file)
-        df_no_conc.to_csv(file_path,header=False)"""  
+        df_no_conc.to_csv(file_path,header=False)"""
                 
         return
 

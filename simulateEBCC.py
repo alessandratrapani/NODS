@@ -501,7 +501,7 @@ class SimulateEBCC:
             i += 1
         return nNOS_coordinates
 
-    def initialize_nods(self):
+    def initialize_nods(self, file_relative_dist = None):
         t0 = time.time()
         simulation_file = "NO_simulation.p"
         nods_sim = NODS(self.params)
@@ -515,6 +515,7 @@ class SimulateEBCC:
             nos_ids=self.vt,
             cluster_ev_point_ids=self.connectivity["parallel_fiber_to_purkinje"]["id_post"],
             cluster_nos_ids=self.connectivity["parallel_fiber_to_purkinje"]["id_post"],
+            file_relative_dist = file_relative_dist
         )
         nods_sim.time = np.arange(0, self.between_start * self.n_trials, 1.0)
         nods_sim.init_simulation(
@@ -541,8 +542,8 @@ class SimulateEBCC:
             pfs = pickle.load(file)
         processed = 0
 
-        for t in range(0,self.n_trials * self.between_start,2):
-            nest.Simulate(2.0)
+        for t in range(0,self.n_trials * self.between_start,5):
+            nest.Simulate(5.0)
             time.sleep(0.01)
             """
             ID_cell = nest.GetStatus(self.spikedetector_granule_cell, "events")[0][
@@ -554,7 +555,7 @@ class SimulateEBCC:
             """
             activity_presynn = get_spike_activity('granule_spikes')
 
-            ind_active_sources = np.where((activity_presynn[:,1]>=(t-1)) & (activity_presynn[:,1]<=t))[0]
+            ind_active_sources = np.where((activity_presynn[:,1]>(t-5)) & (activity_presynn[:,1]<=t))[0]
 
             active_sources = activity_presynn[ind_active_sources,0]
             #"""
@@ -576,7 +577,7 @@ class SimulateEBCC:
             list_dict = []
             for i in range(len(pfs)):
                 list_dict.append(
-                    {"meta_l": float(sig(x=nods_sim.NO_in_ev_points[i], A=1, B=130))}
+                    {"meta_l": float(sig(x=nods_sim.NO_in_ev_points[i], A=1, B=160))}
                 )
             nest.SetStatus(pfs, list_dict)
 
