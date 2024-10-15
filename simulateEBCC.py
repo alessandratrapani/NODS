@@ -545,14 +545,16 @@ class SimulateEBCC:
         for t in range(0,self.n_trials * self.between_start,5):
             nest.Simulate(5.0)
             time.sleep(0.01)
-            """
-            ID_cell = nest.GetStatus(self.spikedetector_granule_cell, "events")[0][
-                "senders"
-            ]
-            active_sources = ID_cell[processed:]
-            processed += len(active_sources)
+        
+            events = nest.GetStatus(self.spikedetector_granule_cell, "events")[0]
+            ID_cell = events["senders"]
+            times = events["times"]
             
-            """
+            ind_active_sources_get = np.where((times>(t-5)) & (times<=t))[0]
+            active_sources_get = ID_cell[ind_active_sources_get]
+
+            #nest.SetStatus(self.spikedetector_granule_cell, {'events': []})
+            
             activity_presynn = get_spike_activity('granule_spikes')
 
             ind_active_sources = np.where((activity_presynn[:,1]>(t-5)) & (activity_presynn[:,1]<=t))[0]
@@ -573,7 +575,7 @@ class SimulateEBCC:
             df_prog_synn.to_csv(prog_synn_path, header=False)
             #"""
 
-            nods_sim.evaluate_diffusion(active_sources, t)
+            nods_sim.evaluate_diffusion(active_sources_get, t)
             list_dict = []
             for i in range(len(pfs)):
                 list_dict.append(
