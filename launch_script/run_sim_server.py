@@ -7,15 +7,15 @@ import numpy as np
 import gc
 
 
-data_path = "./data/"
+data_path = "/home/csartor1/code/NODS/data/"
 condition = "with_NO"
 folder_grid = f"paper/"
 file_rel_dist = os.path.join(data_path,'relative_dist.csv')
 A_minus = -0.0007
 A_plus = 0.00008
-noise_rate = 8.0
-source_folder = "../"
-destination_folder = "../results"
+noise_rate = 4.0
+source_folder = "/home/csartor1/code/NODS/"
+destination_folder = "/results"
 file_prefixes = [
     "glom_spikes",
     "pc_spikes",
@@ -28,7 +28,7 @@ file_prefixes = [
     "aa_",
 ]
 destination_folder = os.path.join(destination_folder, folder_grid)
-os.makedirs(destination_folder, exist_ok=True)
+#os.makedirs(destination_folder, exist_ok=True)
 nest.Install("cerebmodule")
 
 simulation_description = f"EBCC with A_minus, A_plus= {A_minus},{A_plus}, {condition}"
@@ -37,7 +37,7 @@ print(simulation_description)
 if condition == "without_NO":
 
     vt_modality = "1_vt_PC" 
-    simulation = SimulateEBCC(data_path=data_path)
+    simulation = SimulateEBCC(data_path=os.path.join(source_folder, data_path))
     simulation.set_network_configuration()
     simulation.set_nest_kernel()
     simulation.create_network()
@@ -53,7 +53,7 @@ if condition == "without_NO":
 elif condition == "with_NO":
 
     vt_modality = "1_vt_pf-PC" 
-    simulation = SimulateEBCC(data_path=data_path)
+    simulation = SimulateEBCC(data_path=os.path.join(source_folder, data_path))
     simulation.set_network_configuration()
     simulation.set_nest_kernel()
     simulation.create_network()
@@ -101,6 +101,6 @@ folder_sim = f'{condition}_{int(noise_rate)}Hz'
 move_folder = os.path.join(os.path.join(destination_folder, folder_sim))
 #os.makedirs(os.path.join(destination_folder, folder_sim), exist_ok=True)
 from move_files import move_files_to_folder
-move_files_to_folder(source_folder, move_folder, file_prefixes)
+#move_files_to_folder(source_folder, move_folder, file_prefixes)
 
 nest.ResetKernel()

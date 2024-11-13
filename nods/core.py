@@ -68,7 +68,7 @@ class NODS:
         self.sort_sources(all_nNOS, ev_points,file_relative_dist)
         self.no_conc = np.zeros(len(ev_point_ids))
         #df = pd.DataFrame(ev_points)
-        #df.to_csv("/home/nomodel/code/NODS/results/NO_concentration_data/ev_points_dict.csv")
+        #df.to_csv("/home/csartor1/code/NODS/data/ev_points_dict.csv")
         return
 
     def sort_sources(self, all_nNOS, ev_points, filename = None):
@@ -145,16 +145,15 @@ class NODS:
         ds = self.ds
         NO_in_ev_points = self.NO_in_ev_points
         #no_conc_to_file = self.no_conc
-
-        output_folder = "/home/nomodel/code/NODS/results/NO_concentration_data_test_5ms/"
+        
+        output_folder = "/home/csartor1/code/NODS/results/NO_concentration_data_CS_5ms/"
         if not os.path.exists(output_folder):
                 os.makedirs(output_folder)
-
         file_name = f"NO_concentration_t_{t}.csv"
         file_path = os.path.join(output_folder, file_name)
-    
+        
         r_max_ds = r_max / ds
-
+        print('calculate diffusion', flush=True)
         for source_id in source_to_eval:
             spike = 1 if source_id in active_sources else 0
 
@@ -169,50 +168,21 @@ class NODS:
                 'u': u,
                 'NO_diffused_tf': NO
             })
-
-        """source_ids = self.relative_dist[:, 0].astype(int)  # First column: source_id
-        ev_points_ids = self.relative_dist[:, 2].astype(int)  # Third column: ev_points_id
-        distances = self.relative_dist[:, 3]  # Fourth column: d
-        distances = np.maximum(distances, 0.2)  # Vectorized min(d, 0.2)
         
-        distance_indices = np.round((distances + r_max_ds)).astype(int)
-        
-        NO_contributions = np.array([source_data[source_id]['NO_diffused_tf'][distance_index]
-                                     for source_id, distance_index in zip(source_ids, distance_indices)])
-        current_ev_points_id = ev_points_ids[0]
-        current_contribution_sum = 0
-        contributions_to_file = []
-        if(t == 120):
-            print(t)
-
-        for i in range(len(ev_points_ids)):
-            ev_points_id = ev_points_ids[i]
-            NO_contribution = NO_contributions[i]
-            if ev_points_id != current_ev_points_id:
-                NO_in_ev_points[current_ev_points_id] = current_contribution_sum
-                contributions_to_file.append([current_ev_points_id, current_contribution_sum])
-        
-                current_ev_points_id = ev_points_id
-                current_contribution_sum = 0
-                
-            current_contribution_sum += NO_contribution
-        
-        NO_in_ev_points[current_ev_points_id] = current_contribution_sum
-        contributions_to_file.append([current_ev_points_id, current_contribution_sum])"""
         current_ev_points_id = int(self.relative_dist[0][2])
         current_contribution_sum = 0
         contributions_to_file = []
-
+        print('update diffusion', flush=True)
         for row in self.relative_dist:
             source_id, nos_id, ev_points_id, d, cluster = row
             ev_points_id = int(ev_points_id)
             # Set a minimum value for d
             if d < 0.2:
                 d = 0.2
-
+            
             distance_index = round((d + r_max) / ds)
             NO_contribution = source_data[int(source_id)]['NO_diffused_tf'][distance_index]
-
+            
             if ev_points_id != current_ev_points_id:
                 NO_in_ev_points[current_ev_points_id] = current_contribution_sum
                 contributions_to_file.append([current_ev_points_id, current_contribution_sum])
@@ -224,12 +194,53 @@ class NODS:
 
         NO_in_ev_points[current_ev_points_id] = current_contribution_sum
         contributions_to_file.append([current_ev_points_id, current_contribution_sum])
+
         df_no_conc = pd.DataFrame(contributions_to_file)
         df_no_conc.to_csv(file_path,header=False)
         """no_conc_to_file[ev_points_id] = NO_in_ev_points[ev_points_id]
         df_no_conc = pd.DataFrame(no_conc_to_file)
         df_no_conc.to_csv(file_path,header=False)"""
-                
+        return
+        
+
+    def old_evaluate_diffusion(self, active_sources,t):
+        source_data = self.NO_from_source
+        source_to_eval = self.source_to_eval
+        dt = self.dt
+        tauCa = self.tauCa
+        tauNOS1 = self.tauNOS1
+        tauNOS2 = self.tauNOS2
+        A = self.A
+        B = self.B
+        Green_LUT = self.Green_LUT
+        r_max = self.r_max
+        ds = self.ds
+        NO_in_ev_points = self.NO_in_ev_points
+        
+        for source_id in source_to_eval:
+            spike = 1 if source_id in active_sources else 0
+
+            source = source_data[source_id]
+            Calm2C, nNOS, NO_produced_t1 = Production_function(dt, spike, source['Calm2C'], source['nNOS'], tauCa, tauNOS1, tauNOS2, A)
+            u, NO = Diffusion_function(dt, source['u'], Green_LUT, source['NO_produced_t0'], NO_produced_t1, B)
+
+            source['Calm2C'] = Calm2C
+            source['nNOS'] = nNOS
+            source['NO_produced_t0'] = NO_produced_t1
+            source['u'] = u
+            source['NO_diffused_tf'] = NO
+
+        for row in self.relative_dist:
+            source_id, _, ev_points_id, d, __ = row
+            source_id = int(source_id)
+            ev_points_id = int(ev_points_id)
+            if d < 0.2:
+                d = 0.2
+
+            distance_index = round((d + r_max) / ds)
+            NO_contribution = source_data[source_id]['NO_diffused_tf'][distance_index]
+            NO_in_ev_points[ev_points_id] += NO_contribution
+        
         return
 
 def Production_function(dt,Ca_spike,Calm2C_old,nNOS_old,tauCa,tauNOS1,tauNOS2,A):
