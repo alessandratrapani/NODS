@@ -12,6 +12,7 @@ import pickle
 class SimulateEBCC:
     def __init__(self, data_path="/home/csartor1/code/NODS/data/") -> None:
         self.data_path = data_path
+        self.dt_sim = 5
         params_filename = "model_parameters.json"
         root_path = "./nods"
         with open('/home/csartor1/code/NODS/nods/model_parameters.json', "r") as read_file:
@@ -222,10 +223,10 @@ class SimulateEBCC:
                     t0 = time.time()
                     print("save pf-Pc connections")
                     pfs = nest.GetConnections(
-                        self.neuronal_populations["granule_cell"]["cell_ids"],
-                        self.neuronal_populations["purkinje_cell"]["cell_ids"],
-                    )
-                    with open(os.path.join(self.data_path,'pfs-PC.pkl', 'wb')) as file:
+                            self.neuronal_populations["granule_cell"]["cell_ids"],
+                            self.neuronal_populations["purkinje_cell"]["cell_ids"],)
+                    file_path =  os.path.join(self.data_path,'pfs-PC_prova.pkl')   
+                    with open(file_path, 'wb') as file:
                         pickle.dump(pfs, file)
                     t = time.time() - t0
                     print("Time to get the pf-Pc connections: ", t)"""
@@ -499,8 +500,8 @@ class SimulateEBCC:
             nNOS_coordinates[i, 2] = nNOS_z
             i += 1
         return nNOS_coordinates
-
-    def initialize_nods(self, file_relative_dist = None):
+ 
+    def initialize_nods(self, file_relative_dist = None, file_ev_points = None, file_nNOS = None):
         t0 = time.time()
         simulation_file = "NO_simulation.p"
         nods_sim = NODS(self.params)
@@ -514,7 +515,9 @@ class SimulateEBCC:
             nos_ids=self.vt,
             cluster_ev_point_ids=self.connectivity["parallel_fiber_to_purkinje"]["id_post"],
             cluster_nos_ids=self.connectivity["parallel_fiber_to_purkinje"]["id_post"],
-            file_relative_dist = file_relative_dist
+            file_relative_dist = file_relative_dist,
+            file_ev_points=file_ev_points,
+            file_nNOS=file_nNOS
         )
         nods_sim.time = np.arange(0, self.between_start * self.n_trials, 1.0)
         nods_sim.init_simulation(
@@ -537,32 +540,30 @@ class SimulateEBCC:
     def simulate_network_with_NO(self, nods_sim) -> None:
         print("simulate with NO")
         print("Single trial length: ", self.between_start)
-        with open("/home/csartor1/code/NODS/results/" + "pfs-PC.pkl", "rb") as file:
+        with open(self.data_path + "pfs-PC_prova.pkl", "rb") as file:
             pfs = pickle.load(file)
-        processed = 0
-
-        for t in range(0,self.n_trials * self.between_start,5):
-            print('simulate 5 ms')
+        dt_sim = self.dt_sim
+        for t in range(0,self.n_trials * self.between_start,dt_sim):
+            #print('simulate 5 ms', flush = True)
             nest.Simulate(5.0)
             time.sleep(0.01)
-            print('Get Status', flush=True)
+            #print('Get Status', flush=True)
             events = nest.GetStatus(self.spikedetector_granule_cell, "events")[0]
             ID_cell = events["senders"]
             times = events["times"]
-            print('take active sources', flush=True)
+            #print('take active sources', flush=True)
             ind_active_sources_get = np.where((times>(t-5)) & (times<=t))[0]
             active_sources_get = ID_cell[ind_active_sources_get]
-
-            #nest.SetStatus(self.spikedetector_granule_cell, {'events': []})
+            times_spikes = np.array(times[ind_active_sources_get])-t
+            #print('sim EBCC: evaluate diffusion', flush=True)
+            nods_sim.evaluate_diffusion(active_sources_get, t, times_spikes, dt_sim)
             
-            print('sim EBCC: evaluate diffusion', flush=True)
-            nods_sim.evaluate_diffusion(active_sources_get, t)
             list_dict = []
             for i,pf in enumerate(pfs):
-                meta_l_update = float(sig(x=nods_sim.NO_in_ev_points[i], A=1, B=160))
+                meta_l_update = float(sig(x=nods_sim.NO_in_ev_points[i], A=1, B=100))
                 #nest.SetStatus([pf], {"meta_l": meta_l_update})
                 list_dict.append({"meta_l": meta_l_update})
-                #print([pf , meta_l_update])
+                #print([pf , meta_l_update], flush=True) 
             nest.SetStatus(pfs, list_dict)
 
     def plot_cell_activity_over_trials(self, cell, step):

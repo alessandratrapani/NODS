@@ -20,12 +20,11 @@ class NODS:
         self.r_max   = model_parameters['diffusion']['r_max']
         self.distances = np.arange(-self.r_max, self.r_max+self.ds, self.ds)
         r_2    = self.distances**2
+        self.dt = 1
         self.Green_LUT = np.zeros((len(self.distances),2))
         self.Green_LUT[:, 0] = Green_function(0, r_2, self.D, self.I)
-        self.Green_LUT[:, 1] = Green_function(2, r_2, self.D, self.I)
-
+        self.Green_LUT[:, 1] = Green_function(self.dt, r_2, self.D, self.I)
         #self.dt         = model_parameters['simulation']['dt']
-        self.dt = 2
         self.time       = np.arange(model_parameters['simulation']['t_start'], model_parameters['simulation']['t_end'], self.dt)
         self.Calm2C_0   = model_parameters['simulation']['Calm2C_0']
         self.nNOS_0     = model_parameters['simulation']['nNOS_0']
@@ -46,7 +45,19 @@ class NODS:
                                                    z =  ev_point_coordinates[index,2],
                                                    cluster = cluster_ev_point_ids[index])
             #ev_points.sort_values(by='evpoint_id')
-        #TODO else: load da file
+        else:
+            df = pd.read_csv(file_ev_points)
+            ev_points = {
+                int(row['ev_points_id']): {
+                    'x': float(row['x']),
+                    'y': float(row['y']),
+                    'z': float(row['z']),
+                    'cluster': int(row['cluster'])
+                }
+                for _, row in df.iterrows()
+            }
+            ev_point_ids = df['ev_points_id'].values
+            ev_point_ids = np.array(ev_point_ids, dtype=int)
 
         if file_nNOS is None:
             if nos_ids is None:
@@ -64,12 +75,28 @@ class NODS:
                                             z =  nNOS_coordinates[index,2],
                                             cluster = self.cluster_nos_ids[index])                    
             #all_nNOS = pd.DataFrame({'source_id':source_ids, 'nos_id':nos_ids, 'x': nNOS_coordinates[:,0], 'y': nNOS_coordinates[:,1], 'z': nNOS_coordinates[:,2]})
-        #TODO else: load da file
+        else:
+            df = pd.read_csv(file_nNOS)
+            all_nNOS = {
+                int(row['nos_id']): {
+                    'source_id': int(row['source_id']),
+                    'x': float(row['x']),
+                    'y': float(row['y']),
+                    'z': float(row['z']),
+                    'cluster': int(row['cluster'])
+                }
+                for _, row in df.iterrows()
+            }
+            ev_point_ids = df['ev_points_id'].values
+            ev_point_ids = np.array(ev_point_ids, dtype=int)
+
         self.sort_sources(all_nNOS, ev_points,file_relative_dist)
         self.no_conc = np.zeros(len(ev_point_ids))
-        #df = pd.DataFrame(ev_points)
-        #df.to_csv("/home/csartor1/code/NODS/data/ev_points_dict.csv")
-        return
+        df = pd.DataFrame.from_dict(all_nNOS, orient='index').reset_index()
+        # Rename columns to match your desired output
+        df.columns = ['nos_id', 'source_id','x', 'y', 'z', 'cluster']
+        df.to_csv("/home/csartor1/code/NODS/data/nNOS_dict.csv")
+        
 
     def sort_sources(self, all_nNOS, ev_points, filename = None):
         """function to filter the sources of nNOS activation to be avaluated"""
@@ -130,7 +157,7 @@ class NODS:
         dill.dump(self, open(simulation_file, "wb"))
         return 
         
-    def evaluate_diffusion(self,active_sources,t):
+    def evaluate_diffusion(self,active_sources,t, times_spikes, dt_sim):
 
         source_data = self.NO_from_source
         source_to_eval = self.source_to_eval
@@ -146,24 +173,42 @@ class NODS:
         NO_in_ev_points = self.NO_in_ev_points
         #no_conc_to_file = self.no_conc
         
-        output_folder = "/home/csartor1/code/NODS/results/NO_concentration_data_CS_5ms/"
+        """output_folder = f"/home/csartor1/code/NODS/results/NO_concentration_data_CS_{dt_sim}ms_cycled_2/"
         if not os.path.exists(output_folder):
                 os.makedirs(output_folder)
         file_name = f"NO_concentration_t_{t}.csv"
-        file_path = os.path.join(output_folder, file_name)
+        file_path = os.path.join(output_folder, file_name)"""
         
         r_max_ds = r_max / ds
-        print('calculate diffusion', flush=True)
+        #print('calculate diffusion', flush=True)
         for source_id in source_to_eval:
-            spike = 1 if source_id in active_sources else 0
-
+            #spike = 1 if source_id in active_sources else 0
             source = source_data[source_id]
-            nNOS, Calm2C, NO_produced_t1 = Production_function(dt, spike, source['Calm2C'], source['nNOS'], tauCa, tauNOS1, tauNOS2, A)
-            u, NO = Diffusion_function(dt, source['u'], Green_LUT, source['NO_produced_t0'], NO_produced_t1, B)
+            t_spike = times_spikes[active_sources==source_id]
+
+            nNOS_t0 = source['nNOS']
+            Calm2C_t0 = source['Calm2C']
+            NO_produced_t0 = source['NO_produced_t0']
+            u0 = source['u']
+            
+            for i in range(dt_sim):
+                
+                if (source_id in active_sources) and (i == t_spike):       
+                    spike = 1
+                    
+                else:
+                    spike = 0
+                
+                nNOS_t1, Calm2C_t1, NO_produced_t1 = Production_function(dt, spike, Calm2C_t0, nNOS_t0, tauCa, tauNOS1, tauNOS2, A)
+                u, NO = Diffusion_function(dt, u0, Green_LUT, NO_produced_t0, NO_produced_t1, B)
+                NO_produced_t0 = NO_produced_t1
+                nNOS_t0 = nNOS_t1
+                Calm2C_t0 = Calm2C_t1
+                u0 = u
 
             source.update({
-                'Calm2C': Calm2C,
-                'nNOS': nNOS,
+                'Calm2C': Calm2C_t1,
+                'nNOS': nNOS_t1,
                 'NO_produced_t0': NO_produced_t1,
                 'u': u,
                 'NO_diffused_tf': NO
@@ -172,7 +217,7 @@ class NODS:
         current_ev_points_id = int(self.relative_dist[0][2])
         current_contribution_sum = 0
         contributions_to_file = []
-        print('update diffusion', flush=True)
+        #print('update diffusion', flush=True)
         for row in self.relative_dist:
             source_id, nos_id, ev_points_id, d, cluster = row
             ev_points_id = int(ev_points_id)
@@ -195,10 +240,7 @@ class NODS:
         NO_in_ev_points[current_ev_points_id] = current_contribution_sum
         contributions_to_file.append([current_ev_points_id, current_contribution_sum])
 
-        df_no_conc = pd.DataFrame(contributions_to_file)
-        df_no_conc.to_csv(file_path,header=False)
-        """no_conc_to_file[ev_points_id] = NO_in_ev_points[ev_points_id]
-        df_no_conc = pd.DataFrame(no_conc_to_file)
+        """df_no_conc = pd.DataFrame(contributions_to_file)
         df_no_conc.to_csv(file_path,header=False)"""
         return
         
@@ -245,7 +287,7 @@ class NODS:
 
 def Production_function(dt,Ca_spike,Calm2C_old,nNOS_old,tauCa,tauNOS1,tauNOS2,A):
     
-    Calm2C = Calm2C_old + (((Calm2C_old/tauCa) + Ca_spike)*dt)
+    Calm2C = Calm2C_old + (((Calm2C_old/tauCa)*dt + Ca_spike))
     a = ((1/tauNOS1)*((Calm2C)/((Calm2C)+1)))-(nNOS_old/tauNOS2)
     nNOS = nNOS_old+a*dt
     NO = nNOS*A
