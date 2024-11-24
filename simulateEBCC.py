@@ -560,7 +560,7 @@ class SimulateEBCC:
             
             list_dict = []
             for i,pf in enumerate(pfs):
-                meta_l_update = float(sig(x=nods_sim.NO_in_ev_points[i], A=1, B=100))
+                meta_l_update = float(sig(x=nods_sim.NO_in_ev_points[i], A=1, B=60))
                 #nest.SetStatus([pf], {"meta_l": meta_l_update})
                 list_dict.append({"meta_l": meta_l_update})
                 #print([pf , meta_l_update], flush=True) 

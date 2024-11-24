@@ -11,8 +11,8 @@ import os
 import scipy.stats as st
 
 noise_rates = [0, 4, 8]
-rooth_path = "/home/nomodel/code/NODS/results/"
-with open("/home/nomodel/code/NODS/network_configuration.json", "r") as json_file:
+rooth_path = "/home/csartor1/code/NODS/results/"
+with open("/home/csartor1/code/NODS/network_configuration.json", "r") as json_file:
     net_config = json.load(json_file)
 
 CS_burst_dur = net_config["devices"]["CS"]["parameters"]["burst_dur"]
@@ -36,13 +36,13 @@ positions = [1,2,4,5]
 
 for i, noise_rate in enumerate(noise_rates):
    
-    results_path = rooth_path + f"grid_search/{noise_rate}Hz/min4_plus8/6/"
+    results_path = rooth_path + f"without_NO/{noise_rate}Hz/min4_plus8/6/"
     spk = get_spike_activity(cell_name=cell, path=results_path)
     sdf_mean_over_trials = []
     sdf_baseline = np.zeros((n_trials))
     sdf_cr = np.zeros((n_trials))
 
-    results_path_NO = rooth_path + f"grid_search/grid_NO/{noise_rate}Hz/0/"
+    results_path_NO = rooth_path + f"with_NO/{noise_rate}Hz/sim{i+1}/"
     spk_NO = get_spike_activity(cell_name=cell, path=results_path_NO)
     sdf_mean_over_trials_NO = []
     sdf_baseline_NO = np.zeros((n_trials))

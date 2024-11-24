@@ -6,16 +6,17 @@ from simulateEBCC import SimulateEBCC
 import numpy as np
 import gc
 
-
+condition = sys.argv[1]
+noise_rate = float(sys.argv[2])
 data_path = "/home/csartor1/code/NODS/data/"
-condition = "with_NO"
+#condition = "with_NO"
 folder_grid = f"paper/"
 file_rel_dist = os.path.join(data_path,'relative_dist.csv')
 file_ev_points = os.path.join(data_path, "reshaped_ev_points.csv")
 file_nNOS = os.path.join(data_path, "nNOS_dict.csv")
 A_minus = -0.0007
 A_plus = 0.00008
-noise_rate = 4.0
+#noise_rate = 8.0
 source_folder = "/home/csartor1/code/NODS/"
 destination_folder = "/results"
 file_prefixes = [
@@ -36,7 +37,7 @@ nest.Install("cerebmodule")
 simulation_description = f"EBCC with A_minus, A_plus= {A_minus},{A_plus}, {condition}"
 print(simulation_description)
 
-if condition == "without_NO":
+if condition == "wo_NO":
 
     vt_modality = "1_vt_PC" 
     simulation = SimulateEBCC(data_path=os.path.join(source_folder, data_path))
@@ -52,7 +53,7 @@ if condition == "without_NO":
     simulation.define_recorders()
     simulation.simulate_network()
 
-elif condition == "with_NO":
+elif condition == "w_NO":
 
     vt_modality = "1_vt_pf-PC" 
     simulation = SimulateEBCC(data_path=os.path.join(source_folder, data_path))
@@ -62,8 +63,8 @@ elif condition == "with_NO":
     simulation.create_vt(vt_modality=vt_modality)
     simulation.connect_network_plastic_syn(vt_modality=vt_modality,A_minus=A_minus, A_plus=A_plus)
     simulation.stimulus_geometry(plot=False)
-    simulation.define_CS_stimuli()
-    simulation.define_US_stimuli()
+    #simulation.define_CS_stimuli()
+    #simulation.define_US_stimuli()
     simulation.define_bg_noise(rate=noise_rate)
     simulation.define_recorders()
     nods_sim = simulation.initialize_nods(file_rel_dist)
