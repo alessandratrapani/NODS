@@ -51,6 +51,7 @@ if condition == "wo_NO":
     simulation.define_US_stimuli()
     simulation.define_bg_noise(rate=noise_rate)
     simulation.define_recorders()
+    simulation.get_activated_pf_PC()
     simulation.simulate_network()
 
 elif condition == "w_NO":

@@ -651,3 +651,18 @@ class SimulateEBCC:
         plt.xlabel("Time [ms]")
         plt.ylabel("Neuron ID")
         fig.savefig(f"aa_raster_{cell}.png")
+
+    def get_activated_pf_PC(self):
+        
+        id_glom = self.id_map_glom
+        glom_granule = nest.GetConnections(id_glom,self.neuronal_populations["granule_cell"]["cell_ids"])
+        id_granule = []
+        for connection in glom_granule:
+            id_granule.append(connection[1])
+        id_granule = list(set(id_granule))
+        granule_pc = nest.GetConnections(id_granule,self.neuronal_populations["purkinje_cell"]["cell_ids"])
+        file_path =  os.path.join(self.data_path,'pfs-PC_CS.pkl')   
+        with open(file_path, 'wb') as file:
+            pickle.dump(granule_pc, file)
+
+        return
