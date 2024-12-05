@@ -1,5 +1,6 @@
 import os
 import subprocess
+import time
 
 def create_slurm_script(noise, simulation, condition):
     slurm_script_content = f"""#!/bin/bash
@@ -23,10 +24,9 @@ spack load py-cython@0.29.24%gcc@10.2.0 arch=linux-centos8-cascadelake
 source /g100_work/EIRI_E_POLIMI/no_paper/NO_env/bin/activate
 source /g100_work/EIRI_E_POLIMI/no_paper/nest-install/bin/nest_vars.sh
 
-cd $SCRATCH/results
+cd $SCRATCH/results/Test
 
 cd {condition}
-
 
 mkdir simulation_{noise}Hz_sim{simulation}
 
@@ -34,8 +34,6 @@ cd simulation_{noise}Hz_sim{simulation}
 
 srun python /g100_work/EIRI_E_POLIMI/no_paper/NODS/grid_search_Aplus_Aminus/simulation.py {noise} {simulation} {condition}
 """
-
-#export SRUN_CPUS_PER_TASK=$SLURM_CPUS_PER_TASK
         
     slurm_script_path = "run_simulation.slurm"
     
@@ -55,10 +53,12 @@ def submit_slurm_script(script_path):
 
 if __name__ == "__main__":
 
-    
     noise = input("Enter noise: ")
-    simulation = input("Enter simulation: ")
+    simulation = input("Enter number of simulation: ")
     condition = input("Enter NO condition: ")
 
     slurm_script_path = create_slurm_script(noise, simulation, condition)
     submit_slurm_script(slurm_script_path)
+
+    
+    

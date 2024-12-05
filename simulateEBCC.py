@@ -12,20 +12,17 @@ import pickle
 class SimulateEBCC:
     def __init__(self, data_path="./data/") -> None:
         self.data_path = data_path
+        self.dt_sim = 5
         params_filename = "model_parameters.json"
         root_path = "/g100_work/EIRI_E_POLIMI/no_plasticity/NODS/nods/"
         with open(os.path.join(root_path, params_filename), "r") as read_file:
             self.params = json.load(read_file)
         pass
 
-    def set_network_configuration(self, test) -> None:
+    def set_network_configuration(self) -> None:
         """configure network geometry, self.connectivity, and models"""
-        if test:
-            with open("/g100_work/EIRI_E_POLIMI/no_paper/NODS/network_configuration_test.json", "r") as json_file:
-                self.net_config = json.load(json_file) 
-        if test == False:
-            with open("/g100_work/EIRI_E_POLIMI/no_paper/NODS/network_configuration.json", "r") as json_file:
-                self.net_config = json.load(json_file)
+        with open("/g100_work/EIRI_E_POLIMI/no_paper/NODS/network_configuration.json", "r") as json_file:
+            self.net_config = json.load(json_file)
         hdf5_file = "cerebellum_300x_200z.hdf5"
         network_geom_file = self.data_path + "geom_" + hdf5_file
         network_connectivity_file = self.data_path + "conn_" + hdf5_file
@@ -111,7 +108,7 @@ class SimulateEBCC:
                     "senders": self.neuronal_populations[pre]["cell_ids"],
                     "targets": self.neuronal_populations[post]["cell_ids"],
                 }
-                #WeightPFPC = nest.Create("weight_recorder", params=recdict2)
+                WeightPFPC = nest.Create("weight_recorder", params=recdict2)
 
                 if vt_modality == "1_vt_PC":
                     nest.SetDefaults(
@@ -128,7 +125,7 @@ class SimulateEBCC:
                                 "parameters"
                             ]["Wmax"],
                             "vt": self.vt[0],
-                            #"weight_recorder": WeightPFPC[0],
+                            "weight_recorder": WeightPFPC[0],
                         },
                     )
                     syn_param = {
@@ -194,7 +191,7 @@ class SimulateEBCC:
                                 "parameters"
                             ]["Wmax"],
                             "vt": self.vt[0],
-                            #"weight_recorder": WeightPFPC[0],
+                            "weight_recorder": WeightPFPC[0],
                         },
                     )
 
@@ -390,7 +387,6 @@ class SimulateEBCC:
         for sg in range(n_CS_device - 1):
             random_spikes = np.random.uniform(low=t0, high=tf, size=CS_n_spikes)
             CS_matrix_start = np.round(np.sort(random_spikes))
-            print(CS_matrix_start)
             CS_matrix = np.concatenate(
                 [CS_matrix_start + self.between_start * t for t in range(self.n_trials)]
             )
@@ -443,7 +439,7 @@ class SimulateEBCC:
         if rate != 0:
             rate = (
                 rate or self.net_config["devices"]["background_noise"]["parameters"]["rate"]
-            )
+        )
         nest.SetStatus(
             noise_device,
             params={
@@ -506,7 +502,7 @@ class SimulateEBCC:
             i += 1
         return nNOS_coordinates
 
-    def initialize_nods(self):
+    def initialize_nods(self, file_relative_dist = None):
         t0 = time.time()
         simulation_file = "NO_simulation.p"
         nods_sim = NODS(self.params)
@@ -518,10 +514,9 @@ class SimulateEBCC:
             ev_point_coordinates=nNOS_coordinates,
             source_ids=self.connectivity["parallel_fiber_to_purkinje"]["id_pre"],
             nos_ids=self.vt,
-            cluster_ev_point_ids=self.connectivity["parallel_fiber_to_purkinje"][
-                "id_post"
-            ],
+            cluster_ev_point_ids=self.connectivity["parallel_fiber_to_purkinje"]["id_post"],
             cluster_nos_ids=self.connectivity["parallel_fiber_to_purkinje"]["id_post"],
+            file_relative_dist = file_relative_dist
         )
         nods_sim.time = np.arange(0, self.between_start * self.n_trials, 1.0)
         nods_sim.init_simulation(
@@ -545,68 +540,30 @@ class SimulateEBCC:
         
         print("simulate with NO")
         print("Single trial length: ", self.between_start)
-
+        dt_sim = self.dt_sim
         # Load data once
         with open(self.data_path + "pfs-PC.pkl", "rb") as file:
             pfs = pickle.load(file)
 
-        n_trials = self.n_trials
-        between_start = self.between_start
-        NO_in_ev_points = nods_sim.NO_in_ev_points
-
-        def process_trial(t):
-            # Simulate for a trial
-            nest.Simulate(2.0)
-            time.sleep(0.01)  # Adjust this if needed
-
-            # Get active sources
-            """ID_cell = nest.GetStatus(self.spikedetector_granule_cell, "events")[0]["senders"]
-            active_sources = ID_cell[processed[0]:]
-            processed[0] += len(active_sources)"""
-
-            activity_presynn = get_spike_activity('granule_spikes')
-            ind_active_sources = np.where((activity_presynn[:,1]>=(t-1)) & (activity_presynn[:,1]<=t))[0]
-            active_sources = activity_presynn[ind_active_sources,0]
-            # Evaluate diffusion
-            nods_sim.evaluate_diffusion(active_sources, t)
-
-            # Prepare data for updating status
-            list_dict = [
-                {"meta_l": float(sig(x=NO_in_ev_points[i], A=1, B=130))}
-                for i in range(len(pfs))
-            ]
-
-            nest.SetStatus(pfs, list_dict)
-
-        # Process trials
-        processed = [0]  # Use a list to pass by reference
-        for t in range(0,n_trials * between_start,2):
-            process_trial(t)
-
-        """
-        print("simulate with NO")
-        print("Single trial length: ", self.between_start)
-        with open(self.data_path + "pfs-PC.pkl", "rb") as file:
-            pfs = pickle.load(file)
-        processed = 0
-
-        for t in range(self.n_trials * self.between_start):
-            nest.Simulate(1.0)
+        for t in range(0,self.n_trials * self.between_start,dt_sim):
+            nest.Simulate(5.0)
             time.sleep(0.01)
-            ID_cell = nest.GetStatus(self.spikedetector_granule_cell, "events")[0][
-                "senders"
-            ]
-            active_sources = ID_cell[processed:]
-            processed += len(active_sources)
-            nods_sim.evaluate_diffusion(active_sources, t)
+            events = nest.GetStatus(self.spikedetector_granule_cell, "events")[0]
+            ID_cell = events["senders"]
+            times = events["times"]
+            
+            ind_active_sources_get = np.where((times>(t-5)) & (times<=t))[0]
+            active_sources = ID_cell[ind_active_sources_get]
+            times_spikes = np.array(times[ind_active_sources_get])-t
+            
+            nods_sim.evaluate_diffusion(active_sources, t, times_spikes, dt_sim)
             list_dict = []
             for i in range(len(pfs)):
                 list_dict.append(
-                    {"meta_l": float(sig(x=nods_sim.NO_in_ev_points[i], A=1, B=130))}
+                    {"meta_l": float(sig(x=nods_sim.NO_in_ev_points[i], A=1, B=60))}
                 )
             nest.SetStatus(pfs, list_dict)
-        """
-        return nods_sim.NO_conc_update
+
     
     def plot_cell_activity_over_trials(self, cell, step):
         import matplotlib.pyplot as plt
@@ -727,4 +684,4 @@ class SimulateEBCC:
         df_sdf_grid = pd.concat([df_sdf_baseline,df_sdf_cr], axis = 1)
         
         df_sdf_mean_over_trials.to_csv('sdf_mean_over_trials.csv', index = False)
-        df_sdf_grid.to_csv('sdf_grif.csv', index = False)
+        df_sdf_grid.to_csv('sdf_grid.csv', index = False)

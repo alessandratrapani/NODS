@@ -10,14 +10,15 @@ import pandas as pd
 import pickle
 
 noise_rate = float(sys.argv[1])
-sim = int(sys.argv[2])
+sim = sys.argv[2]
 condition = sys.argv[3]
-print(condition)
+
 
 data_path = "/g100_work/EIRI_E_POLIMI/no_paper/NODS/data/"
+rel_dist_path = os.path.join(data_path,'relative_dist.csv')
 #condition = "with NO"
 folder_grid = f"grid_search/grid_NO"
-A_minus = -4*10**-4
+A_minus = -7*10**-4
 A_plus = 8*10**-5
 source_folder = "./"
 destination_folder = "./results"
@@ -43,19 +44,18 @@ print(simulation_description)
 if condition == "with_NO":
     vt_modality = "1_vt_pf-PC" 
     simulation = SimulateEBCC(data_path=data_path)
-    simulation.set_network_configuration(test = False)
+    simulation.set_network_configuration()
     simulation.set_nest_kernel()
     simulation.create_network()
     simulation.create_vt(vt_modality=vt_modality)
     simulation.connect_network_plastic_syn(vt_modality=vt_modality,A_minus=A_minus, A_plus=A_plus)
     simulation.stimulus_geometry(plot=False)
-    simulation.define_CS_stimuli()
-    simulation.define_US_stimuli()
+    #simulation.define_CS_stimuli()
+    #simulation.define_US_stimuli()
     simulation.define_bg_noise(rate=noise_rate)
     simulation.define_recorders()
-    nods_sim = simulation.initialize_nods()
-    no_concentration = simulation.simulate_network_with_NO(nods_sim)
-    save_no_conc_hdf5(no_concentration)
+    nods_sim = simulation.initialize_nods(file_relative_dist = rel_dist_path)
+    simulation.simulate_network_with_NO(nods_sim)
     
 if condition == "without_NO":
     vt_modality = "1_vt_PC" 
@@ -66,8 +66,8 @@ if condition == "without_NO":
     simulation.create_vt(vt_modality=vt_modality)
     simulation.connect_network_plastic_syn(vt_modality=vt_modality,A_minus=A_minus, A_plus=A_plus)
     simulation.stimulus_geometry(plot=False)
-    simulation.define_CS_stimuli()
-    simulation.define_US_stimuli()
+    #simulation.define_CS_stimuli()
+    #simulation.define_US_stimuli()
     simulation.define_bg_noise(rate=noise_rate)
     simulation.define_recorders()
     simulation.simulate_network()

@@ -19,13 +19,12 @@ spack load py-cython@0.29.24%gcc@10.2.0 arch=linux-centos8-cascadelake
 source /g100_work/EIRI_E_POLIMI/no_paper/NO_env/bin/activate
 source /g100_work/EIRI_E_POLIMI/no_paper/nest-install/bin/nest_vars.sh
 
-cd $SCRATCH/results
+cd $SCRATCH/results/Paper/noise_only
 
 cd with_NO
 
+mkdir simulation_8Hz_sim9
 
-mkdir simulation_0Hz_sim10
+cd simulation_8Hz_sim9
 
-cd simulation_0Hz_sim10
-
-srun python /g100_work/EIRI_E_POLIMI/no_paper/NODS/grid_search_Aplus_Aminus/simulation.py 0 10 with_NO
+srun python /g100_work/EIRI_E_POLIMI/no_paper/NODS/grid_search_Aplus_Aminus/simulation.py 8 9 with_NO

@@ -10,9 +10,9 @@ import seaborn as sns
 import os
 import scipy.stats as st
 
-noise_rates = [0]
-rooth_path = "/home/nomodel/code/NODS/results/grid_search/"
-with open("/home/nomodel/code/NODS/network_configuration.json", "r") as json_file:
+noise_rates = [0,4,8]
+rooth_path = '/g100_scratch/userexternal/csartor1/results/Paper/'
+with open("/g100_work/EIRI_E_POLIMI/no_paper/NODS/network_configuration.json", "r") as json_file:
     net_config = json.load(json_file)
 
 CS_burst_dur = net_config["devices"]["CS"]["parameters"]["burst_dur"]
@@ -27,7 +27,7 @@ US_color = net_config["colors"]["US"]
 with_NO_color = net_config["devices"]["nNOS"]["color"][0]
 without_NO_color = "#000000"
 
-cell = "pc_spikes"
+#cell = "pc_spikes"
 
 fig, axs = plt.subplots(1,2,figsize=(8,4))
 colors = [without_NO_color, with_NO_color, without_NO_color, with_NO_color]
