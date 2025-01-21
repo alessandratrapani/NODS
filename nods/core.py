@@ -193,7 +193,7 @@ class NODS:
             
             for i in range(dt_sim):
                 
-                if (source_id in active_sources) and (i == t_spike):       
+                if (source_id in active_sources) and (i in t_spike):       
                     spike = 1
                     
                 else:
