@@ -91,6 +91,7 @@ readme_content = f"""# Simulation Parameters
                 - Wmin: {simulation.net_config["connection_models"]["parallel_fiber_to_purkinje"]["parameters"]["Wmin"]}
                 - Wmax: {simulation.net_config["connection_models"]["parallel_fiber_to_purkinje"]["parameters"]["Wmax"]}
                 - CS_radius: {simulation.net_config["devices"]["CS"]["radius"]}
+                - PC-DCN_glut: {simulation.net_config["connection_models"]["purkinje_to_dcn_glut_large"]["weight"]}
 
                 ## Description
                 {simulation_description}
