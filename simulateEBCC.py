@@ -445,7 +445,7 @@ class SimulateEBCC:
         for sg in range(n_CS_device - 1):
             t0 = (CS_start_first+sg*burst_time)-delta
             tf = (CS_start_first + (sg+1)*burst_time)+delta
-            random_spikes = np.random.uniform(low=t0, high=tf, size=6)
+            random_spikes = np.random.uniform(low=t0, high=tf, size=10)
             CS_matrix_start = np.round(np.sort(np.unique(random_spikes)))
             CS_matrix = np.concatenate(
                 [CS_matrix_start + self.between_start * t for t in range(self.n_trials)]

@@ -173,7 +173,7 @@ class NODS:
         NO_in_ev_points = self.NO_in_ev_points
         #no_conc_to_file = self.no_conc
         
-        output_folder = f"/home/csartor1/code/NODS/results/NO_concentration_data_noise_{dt_sim}ms_8Hz/"
+        output_folder = os.getcwd()+f"/NO_concentration_data/"
         if not os.path.exists(output_folder):
                 os.makedirs(output_folder)
         file_name = f"NO_concentration_t_{t}.csv"
