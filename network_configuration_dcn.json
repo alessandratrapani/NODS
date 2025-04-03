@@ -519,7 +519,7 @@
         "purkinje_to_dcn_glut_large": {
           "pre": "purkinje_cell",
           "post": "dcn_cell_glut_large",
-            "weight": 0.7,
+            "weight": 0.65,
             "delay": 4.0,
           "synapse": {
             "static_synapse": {}

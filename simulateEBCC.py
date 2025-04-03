@@ -493,7 +493,7 @@ class SimulateEBCC:
         )
         nest.Connect(
             noise_device,
-            self.neuronal_populations["glomerulus"]["cell_ids"],
+            self.neuronal_populations["mossy_fibers"]["cell_ids"],
             "all_to_all",
         )
         if rate != 0:

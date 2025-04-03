@@ -173,11 +173,11 @@ class NODS:
         NO_in_ev_points = self.NO_in_ev_points
         #no_conc_to_file = self.no_conc
         
-        output_folder = os.getcwd()+f"/NO_concentration_data/"
+        """output_folder = os.getcwd()+f"/NO_concentration_data/"
         if not os.path.exists(output_folder):
                 os.makedirs(output_folder)
         file_name = f"NO_concentration_t_{t}.csv"
-        file_path = os.path.join(output_folder, file_name)
+        file_path = os.path.join(output_folder, file_name)"""
         
         r_max_ds = r_max / ds
         #print('calculate diffusion', flush=True)
@@ -240,8 +240,8 @@ class NODS:
         NO_in_ev_points[current_ev_points_id] = current_contribution_sum
         contributions_to_file.append([current_ev_points_id, current_contribution_sum])
 
-        df_no_conc = pd.DataFrame(contributions_to_file)
-        df_no_conc.to_csv(file_path,header=False)
+        """df_no_conc = pd.DataFrame(contributions_to_file)
+        df_no_conc.to_csv(file_path,header=False)"""
         return
         
 
