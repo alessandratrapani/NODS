@@ -20,11 +20,10 @@ class NODS:
         self.r_max   = model_parameters['diffusion']['r_max']
         self.distances = np.arange(-self.r_max, self.r_max+self.ds, self.ds)
         r_2    = self.distances**2
-        self.dt = 1
+        self.dt         = model_parameters['simulation']['dt']
         self.Green_LUT = np.zeros((len(self.distances),2))
         self.Green_LUT[:, 0] = Green_function(0, r_2, self.D, self.I)
         self.Green_LUT[:, 1] = Green_function(self.dt, r_2, self.D, self.I)
-        #self.dt         = model_parameters['simulation']['dt']
         self.time       = np.arange(model_parameters['simulation']['t_start'], model_parameters['simulation']['t_end'], self.dt)
         self.Calm2C_0   = model_parameters['simulation']['Calm2C_0']
         self.nNOS_0     = model_parameters['simulation']['nNOS_0']
@@ -182,22 +181,17 @@ class NODS:
         r_max_ds = r_max / ds
         #print('calculate diffusion', flush=True)
         for source_id in source_to_eval:
-            #spike = 1 if source_id in active_sources else 0
             source = source_data[source_id]
-            t_spike = times_spikes[active_sources==source_id]
-
+            t_spike = np.array(times_spikes[active_sources==source_id],dtype = int)
+            spike_in_dt = np.zeros(int(dt_sim))
+            if len(t_spike) > 0 :
+                spike_in_dt[t_spike] = 1
             nNOS_t0 = source['nNOS']
             Calm2C_t0 = source['Calm2C']
             NO_produced_t0 = source['NO_produced_t0']
             u0 = source['u']
             
-            for i in range(dt_sim):
-                
-                if (source_id in active_sources) and (i in t_spike):       
-                    spike = 1
-                    
-                else:
-                    spike = 0
+            for spike in spike_in_dt:
                 
                 nNOS_t1, Calm2C_t1, NO_produced_t1 = Production_function(dt, spike, Calm2C_t0, nNOS_t0, tauCa, tauNOS1, tauNOS2, A)
                 u, NO = Diffusion_function(dt, u0, Green_LUT, NO_produced_t0, NO_produced_t1, B)

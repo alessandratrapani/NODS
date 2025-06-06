@@ -6,13 +6,14 @@ from simulateEBCC import SimulateEBCC
 import numpy as np
 import gc
 
-plus = int(sys.argv[1])
+plus_str = sys.argv[1]
+plus = float(plus_str.replace('_','.'))
 minus = int(sys.argv[2])
 A_plus = plus*10**-5
 A_minus = -minus*10**-4
 
 data_path = "/home/csartor1/code/NODS/data/"
-condition = "wo_NO"
+condition = "w_NO"
 file_rel_dist = os.path.join(data_path,'relative_dist.csv')
 file_ev_points = os.path.join(data_path, "reshaped_ev_points.csv")
 file_nNOS = os.path.join(data_path, "nNOS_dict.csv")
@@ -37,7 +38,7 @@ nest.Install("cerebmodule")
 simulation_description = f"EBCC with A_minus, A_plus= {A_minus},{A_plus}, {condition}"
 print(simulation_description)
 
-vt_modality = "1_vt_PC" 
+vt_modality = "1_vt_pf-PC" 
 simulation = SimulateEBCC(data_path=os.path.join(source_folder, data_path))
 simulation.set_network_configuration()
 simulation.set_nest_kernel()
@@ -49,10 +50,8 @@ simulation.define_recurrent_CS_stimuli()
 simulation.define_US_stimuli()
 simulation.define_bg_noise(rate=noise_rate)
 simulation.define_recorders()
-#simulation.get_activated_pf_PC()
-simulation.simulate_network()
-
-
+nods_sim = simulation.initialize_nods(file_rel_dist)
+simulation.simulate_network_with_NO(nods_sim)
 
 from datetime import datetime
 # Generate datetime string for the README

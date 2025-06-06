@@ -628,18 +628,6 @@
                 "delay": 1.0
             }
         },
-        "record_glomerulus_spikes": {
-            "device": "spike_detector",
-            "io": "output",
-            "targetting": "cell_type",
-            "cell_types": "glomerulus",
-            "parameters": {
-                "withgid": true,
-                "withtime": true,
-                "to_file": true,
-                "label": "glom_spikes"
-            }
-        },
         "record_pc_spikes": {
             "device": "spike_detector",
             "io": "output",
@@ -650,54 +638,6 @@
                 "withtime": true,
                 "to_file": true,
                 "label": "pc_spikes"
-            }
-        },
-        "record_io_spikes": {
-            "device": "spike_detector",
-            "io": "output",
-            "targetting": "cell_type",
-            "cell_types": "io_cell",
-            "parameters": {
-                "withgid": true,
-                "withtime": true,
-                "to_file": true,
-                "label": "io_spikes"
-            }
-        },
-        "record_golgi_spikes": {
-            "device": "spike_detector",
-            "io": "output",
-            "targetting": "cell_type",
-            "cell_types": "golgi_cell",
-            "parameters": {
-                "withgid": true,
-                "withtime": true,
-                "to_file": true,
-                "label": "golgi_spikes"
-            }
-        },
-        "record_basket_spikes": {
-            "device": "spike_detector",
-            "io": "output",
-            "targetting": "cell_type",
-            "cell_types": "basket_cell",
-            "parameters": {
-                "withgid": true,
-                "withtime": true,
-                "to_file": true,
-                "label": "basket_spikes"
-            }
-        },
-        "record_stellate_spikes": {
-            "device": "spike_detector",
-            "io": "output",
-            "targetting": "cell_type",
-            "cell_types": "stellate_cell",
-            "parameters": {
-                "withgid": true,
-                "withtime": true,
-                "to_file": true,
-                "label": "stellate_spikes"
             }
         },
         "record_grc_spikes": {

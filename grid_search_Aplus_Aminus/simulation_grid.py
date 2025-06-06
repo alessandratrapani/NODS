@@ -14,8 +14,8 @@ k = int(sys.argv[2])
 i = int(sys.argv[3])
 j = int(sys.argv[4])
 
-minus = [8, 7, 6, 5, 4, 3]
-plus = [9, 8, 7, 6, 5, 4]
+minus = [15,16,17]
+plus = [10,10.25,10.5,10.75]
 
 data_path = "./data/"
 condition = "with NO"
@@ -95,7 +95,7 @@ with open("./aa_sim_description.md", "w") as readme_file:
     readme_file.write(readme_content)
 readme_file.close()
 
-folder_sim = f'grid_NO/{noise_rate}Hz_50'
+folder_sim = f'grid_NO'
 
 move_folder = os.path.join(os.path.join(destination_folder, folder_sim), f'{k}')
 os.makedirs(os.path.join(destination_folder, folder_sim), exist_ok=True)

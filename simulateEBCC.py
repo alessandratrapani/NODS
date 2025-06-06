@@ -12,7 +12,7 @@ import pickle
 class SimulateEBCC:
     def __init__(self, data_path="/home/csartor1/code/NODS/data/") -> None:
         self.data_path = data_path
-        self.dt_sim = 5
+        self.dt_sim = 10
         params_filename = "model_parameters.json"
         root_path = "./nods"
         with open('/home/csartor1/code/NODS/nods/model_parameters.json', "r") as read_file:
@@ -606,7 +606,7 @@ class SimulateEBCC:
         dt_sim = self.dt_sim
         for t in range(0,self.n_trials * self.between_start,dt_sim):
             #print('simulate 5 ms', flush = True)
-            nest.Simulate(5.0)
+            nest.Simulate(dt_sim)
             time.sleep(0.01)
             #print('Get Status', flush=True)
             events = nest.GetStatus(self.spikedetector_granule_cell, "events")[0]

@@ -14,8 +14,7 @@ folder_grid = f"paper/"
 file_rel_dist = os.path.join(data_path,'relative_dist.csv')
 file_ev_points = os.path.join(data_path, "reshaped_ev_points.csv")
 file_nNOS = os.path.join(data_path, "nNOS_dict.csv")
-A_minus = -0.0008
-A_plus = 0.00005
+A_plus = 0.00015
 #noise_rate = 8.0
 source_folder = "/home/csartor1/code/NODS/"
 destination_folder = "/results"
@@ -34,11 +33,12 @@ destination_folder = os.path.join(destination_folder, folder_grid)
 #os.makedirs(destination_folder, exist_ok=True)
 nest.Install("cerebmodule")
 
-simulation_description = f"EBCC with A_minus, A_plus= {A_minus},{A_plus}, {condition}"
-print(simulation_description)
+
 
 if condition == "wo_NO":
-
+    A_minus = -0.0005
+    simulation_description = f"EBCC with A_minus, A_plus= {A_minus},{A_plus}, {condition}"
+    print(simulation_description)
     vt_modality = "1_vt_PC" 
     simulation = SimulateEBCC(data_path=os.path.join(source_folder, data_path))
     simulation.set_network_configuration()
@@ -47,15 +47,16 @@ if condition == "wo_NO":
     simulation.create_vt(vt_modality=vt_modality)
     simulation.connect_network_plastic_syn(vt_modality=vt_modality,A_minus=A_minus, A_plus=A_plus)
     simulation.stimulus_geometry(plot=False)
-    simulation.define_recurrent_CS_stimuli()
-    simulation.define_US_stimuli()
+    #simulation.define_recurrent_CS_stimuli()
+    #simulation.define_US_stimuli()
     simulation.define_bg_noise(rate=noise_rate)
     simulation.define_recorders()
-    #simulation.get_activated_pf_PC()
     simulation.simulate_network()
 
 elif condition == "w_NO":
-
+    A_minus = -0.0015
+    simulation_description = f"EBCC with A_minus, A_plus= {A_minus},{A_plus}, {condition}"
+    print(simulation_description)
     vt_modality = "1_vt_pf-PC" 
     simulation = SimulateEBCC(data_path=os.path.join(source_folder, data_path))
     simulation.set_network_configuration()
@@ -64,8 +65,8 @@ elif condition == "w_NO":
     simulation.create_vt(vt_modality=vt_modality)
     simulation.connect_network_plastic_syn(vt_modality=vt_modality,A_minus=A_minus, A_plus=A_plus)
     simulation.stimulus_geometry(plot=False)
-    simulation.define_recurrent_CS_stimuli()
-    simulation.define_US_stimuli()
+    #simulation.define_recurrent_CS_stimuli()
+    #simulation.define_US_stimuli()
     simulation.define_bg_noise(rate=noise_rate)
     simulation.define_recorders()
     nods_sim = simulation.initialize_nods(file_rel_dist)

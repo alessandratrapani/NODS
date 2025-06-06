@@ -14,4 +14,4 @@ i = 4
 j = 1
 
 for k in range(0,n_sim):
-    os.system(f'python /home/nomodel/code/NODS/grid_search_Aplus_Aminus/simulation_grid.py {noise_rate} {k} {i} {j}')
+    os.system(f'python/home/nomodel/code/NODS/grid_search_Aplus_Aminus/simulation_grid.py {noise_rate} {k} {i} {j}')
