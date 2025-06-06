@@ -130,3 +130,6 @@ data/
 cerebellum_NODS.hdf5
 cerebellum_NODS_smaller.hdf5
 p.p
+
+#PLOT
+.html

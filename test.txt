@@ -1,0 +1,8 @@
+Simulation time analysis:
+First spike time: 10.0
+Last spike time: 64.0
+Total simulation time: 54.0
+Total weight changes: 0
+
+Weight changes:
+No weight changes detected.

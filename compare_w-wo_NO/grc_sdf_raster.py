@@ -1,3 +1,4 @@
+
 import sys
 import os
 
@@ -24,18 +25,18 @@ with_NO_color = net_config["devices"]["nNOS"]["color"][0]
 without_NO_color = "#000000"
 cell = "granule_spikes"
 
-results_path = f"/media/amtra/Samsung_T5/EBCC_4Hz/"
+results_path = f"/home/nomodel/code/NODS/results/grid_search/grid_NO/test/"
 spk = get_spike_activity(cell_name=cell, path=results_path)
 evs_cell = spk[:, 0]
 sdf_mean_cell = []
 sdf_change_alltrials = []
-
+"""
 results_path_NO = f"/media/amtra/Samsung_T5/EBCC_NO_4Hz/"
 spk_NO = get_spike_activity(cell_name=cell, path=results_path_NO)
 evs_cell_NO = spk[:, 0]
 sdf_mean_cell_NO = []
 sdf_change_alltrials_NO = []
-
+"""
 # %% PLOT SDF
 palette = list(reversed(sns.color_palette("viridis", n_trials).as_hex()))
 sm = plt.cm.ScalarMappable(cmap="viridis_r", norm=plt.Normalize(vmin=0, vmax=n_trials))
@@ -48,12 +49,12 @@ for trial in range(n_trials):
     stop = CS_start_first + CS_burst_dur + trial * between_start
     sdf_cell = sdf(start=start, stop=stop, spk=spk, step=step)
     sdf_mean_cell.append(sdf_mean(sdf_cell))
-    sdf_cell_NO = sdf(start=start, stop=stop, spk=spk_NO, step=step)
-    sdf_mean_cell_NO.append(sdf_mean(sdf_cell_NO))
+    #sdf_cell_NO = sdf(start=start, stop=stop, spk=spk_NO, step=step)
+    #sdf_mean_cell_NO.append(sdf_mean(sdf_cell_NO))
 
 for trial in range(n_trials):
     axs_sdf[0].plot(sdf_mean_cell[trial], palette[trial])
-    axs_sdf[1].plot(sdf_mean_cell_NO[trial], palette[trial])
+    #axs_sdf[1].plot(sdf_mean_cell_NO[trial], palette[trial])
 
 axs_sdf[0].axvline(CS_start_first, label="CS start", linewidth=3, c=CS_color)
 axs_sdf[0].axvline(
